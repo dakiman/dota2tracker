@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-dota-bg: #0d0e12;
+  --color-dota-bg-light: #1a1b23;
+  --color-dota-bg-card: #13141a;
+  --color-dota-gold: #c8a96e;
+  --color-dota-gold-dark: #9a7b3f;
+  --color-dota-red: #c23b22;
+  --color-dota-green: #5da944;
+  --color-dota-text: #e8e0d0;
+  --color-dota-text-dim: #8a8577;
+  --color-dota-border: #2a2b35;
+  --font-heading: "Cinzel", serif;
+  --font-mono: "DM Mono", monospace;
+  --font-body: "Inter", sans-serif;
+}
+
+body {
+  background-color: var(--color-dota-bg);
+  color: var(--color-dota-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
