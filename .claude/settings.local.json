@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker compose:*)",
+      "Bash(docker volume:*)",
+      "Bash(curl -s http://localhost:8743/api/health)",
+      "Bash(curl -s http://localhost:8743/api/config)",
+      "Bash(curl -s \"http://localhost:8743/api/meta\")",
+      "Bash(curl -s http://localhost:8743/api/heroes/abaddon)",
+      "Bash(curl -s http://localhost:8743/api/heroes/antimage)",
+      "Bash(pnpm install:*)",
+      "Bash(until docker:*)",
+      "Bash(do sleep:*)",
+      "Bash(done)",
+      "Bash(pnpm seed:*)",
+      "Bash(pnpm fetch-data:*)",
+      "Bash(pnpm --filter @friendtracker/shared build)",
+      "Bash(pnpm populate-builds:*)",
+      "Bash(curl -s http://localhost:8743/api/meta)",
+      "Bash(python3 -c \"import json,sys; heroes=json.load\\(sys.stdin\\); [print\\(f''''{h[\"\"heroName\"\"]}: {h[\"\"role\"\"]} \\({h[\"\"matches\"\"]} matches\\)''''\\) for h in heroes[:10]]\")",
+      "Bash(python3 -c \"import json,sys; heroes=json.load\\(sys.stdin\\); [print\\(f''''{h[\"\"heroName\"\"]}: {h[\"\"role\"\"]} \\({h[\"\"matches\"\"]} matches\\)''''\\) for h in heroes[:12]]\")",
+      "Bash(curl -s \"http://localhost:8743/api/heroes/rubick?players=83534161,78589430\")",
+      "Bash(python3 -m json.tool)",
+      "Bash(curl -s \"http://localhost:8743/api/heroes/rubick\")",
+      "Bash(DATABASE_URL=\"postgresql://friendtracker:devpassword@localhost:5474/friendtracker\" pnpm populate-builds)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''role tabs:'''', [\\(r[''''role''''],r[''''matches'''']\\) for r in d[''''roleTabs'''']]\\); print\\(''''totalMatches:'''', d[''''totalMatches'''']\\); print\\(''''skillBuilds:'''', len\\(d[''''skillBuilds'''']\\)\\)\")",
+      "Bash(curl -s 'http://localhost:3000/api/heroes/lion')",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(''''roleTabs:'''', d[''''roleTabs'''']\\)\")"
+    ]
+  }
+}
