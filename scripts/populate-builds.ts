@@ -1,5 +1,5 @@
 /**
- * Aggregates hero_stats into hero_builds (global, player_id = NULL).
+ * Aggregates player_matches into hero_builds (global, player_id = NULL).
  * Safe to re-run: preserves existing buildData (curated builds like Abaddon),
  * only updates totalMatches and winRate for existing rows.
  * Run: pnpm populate-builds (from repo root). Requires DATABASE_URL.
