@@ -1,9 +1,10 @@
 /**
- * Seeds players and sample hero_stats + one curated hero build (Abaddon).
+ * Seeds players and one curated hero build (Abaddon).
+ * Real stats come from `pnpm fetch-data` (player_matches).
  * Run: pnpm seed (from repo root). Requires DATABASE_URL.
  */
 import 'dotenv/config'
-import { db, players, heroStats, heroBuilds, and, eq, isNull } from '../apps/api/src/db/index.js'
+import { db, players, heroBuilds, and, eq, isNull } from '../apps/api/src/db/index.js'
 import type { BuildData, StatsData } from '@friendtracker/shared'
 
 const SAMPLE_PLAYERS = [
@@ -134,34 +135,6 @@ async function main() {
     statsData: abaddonStatsData,
   })
   console.log('Seeded hero_builds (Abaddon).')
-
-  const sampleHeroStats = [
-    { heroId: 1, heroName: 'Anti-Mage', heroSlug: 'antimage', role: 'carry' as const, matches: 50, wins: 28 },
-    { heroId: 102, heroName: 'Abaddon', heroSlug: 'abaddon', role: 'offlane' as const, matches: 30, wins: 16 },
-    { heroId: 2, heroName: 'Axe', heroSlug: 'axe', role: 'offlane' as const, matches: 45, wins: 24 },
-    { heroId: 3, heroName: 'Bane', heroSlug: 'bane', role: 'support' as const, matches: 20, wins: 11 },
-    { heroId: 4, heroName: 'Bloodseeker', heroSlug: 'bloodseeker', role: 'mid' as const, matches: 25, wins: 14 },
-  ]
-
-  for (const player of SAMPLE_PLAYERS) {
-    for (const h of sampleHeroStats) {
-      await db.insert(heroStats).values({
-        playerId: player.id,
-        heroId: h.heroId,
-        heroName: h.heroName,
-        heroSlug: h.heroSlug,
-        role: h.role,
-        matches: h.matches,
-        wins: h.wins,
-        kills: h.matches * 5,
-        deaths: h.matches * 4,
-        assists: h.matches * 8,
-      }).onConflictDoNothing({
-        target: [heroStats.playerId, heroStats.heroId],
-      })
-    }
-  }
-  console.log('Seeded sample hero_stats.')
 
   console.log('Seed done.')
 }
