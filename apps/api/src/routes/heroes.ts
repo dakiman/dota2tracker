@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { and, eq, inArray, or, sql } from 'drizzle-orm'
-import { db, heroBuilds, heroStats } from '../db/index.js'
+import { db, heroBuilds, heroes as heroesTable, playerMatches } from '../db/index.js'
 import type { BuildData, HeroBuild, RoleTabStat } from '@friendtracker/shared'
 
 const heroes = new Hono()
@@ -88,26 +88,37 @@ heroes.get('/:heroSlug', async (c) => {
       stats: statsData,
     }
 
-    const statRows = await db
-      .select({
-        matches: sql<number>`COALESCE(SUM(${heroStats.matches}), 0)::int`,
-        wins: sql<number>`COALESCE(SUM(${heroStats.wins}), 0)::int`,
-        kills: sql<number>`COALESCE(SUM(${heroStats.kills}), 0)::int`,
-        deaths: sql<number>`COALESCE(SUM(${heroStats.deaths}), 0)::int`,
-        assists: sql<number>`COALESCE(SUM(${heroStats.assists}), 0)::int`,
-      })
-      .from(heroStats)
-      .where(
-        playerIds?.length
-          ? and(eq(heroStats.heroSlug, heroSlug), inArray(heroStats.playerId, playerIds))
-          : eq(heroStats.heroSlug, heroSlug)
-      )
-    if (statRows[0] && statRows[0].matches > 0) {
-      payload.totalMatches = statRows[0].matches
-      payload.winRate = (statRows[0].wins / statRows[0].matches) * 100
-      payload.kills = statRows[0].kills
-      payload.deaths = statRows[0].deaths
-      payload.assists = statRows[0].assists
+    const heroRow = await db
+      .select({ id: heroesTable.id })
+      .from(heroesTable)
+      .where(eq(heroesTable.slug, heroSlug))
+      .limit(1)
+
+    if (heroRow.length > 0) {
+      const statRows = await db
+        .select({
+          matches: sql<number>`COUNT(*)::int`,
+          wins: sql<number>`COUNT(*) FILTER (WHERE ${playerMatches.won})::int`,
+          kills: sql<number>`COALESCE(SUM(${playerMatches.kills}), 0)::int`,
+          deaths: sql<number>`COALESCE(SUM(${playerMatches.deaths}), 0)::int`,
+          assists: sql<number>`COALESCE(SUM(${playerMatches.assists}), 0)::int`,
+        })
+        .from(playerMatches)
+        .where(
+          playerIds?.length
+            ? and(
+                eq(playerMatches.heroId, heroRow[0].id),
+                inArray(playerMatches.playerId, playerIds)
+              )
+            : eq(playerMatches.heroId, heroRow[0].id)
+        )
+      if (statRows[0] && statRows[0].matches > 0) {
+        payload.totalMatches = statRows[0].matches
+        payload.winRate = (statRows[0].wins / statRows[0].matches) * 100
+        payload.kills = statRows[0].kills
+        payload.deaths = statRows[0].deaths
+        payload.assists = statRows[0].assists
+      }
     }
 
     return c.json(payload)

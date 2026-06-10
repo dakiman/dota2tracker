@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
-import { and, inArray, sql, desc } from 'drizzle-orm'
-import { db, heroStats } from '../db/index.js'
-import type { HeroStat } from '@friendtracker/shared'
+import { and, eq, inArray, sql, desc } from 'drizzle-orm'
+import { db, heroes, playerMatches } from '../db/index.js'
+import type { HeroStat, Role } from '@friendtracker/shared'
 
 const meta = new Hono()
 
@@ -23,32 +23,30 @@ meta.get('/', async (c) => {
 
     const conditions = []
     if (playerIds?.length) {
-      conditions.push(inArray(heroStats.playerId, playerIds))
+      conditions.push(inArray(playerMatches.playerId, playerIds))
     }
     if (roleParam) {
-      conditions.push(sql`${heroStats.role} = ${roleParam}`)
+      conditions.push(eq(playerMatches.role, roleParam as Role))
     }
     const where = conditions.length ? and(...conditions) : undefined
 
-    const totalMatchesSql = sql<number>`COALESCE(SUM(${heroStats.matches}), 0)::int`
-
     const rows = await db
       .select({
-        heroId: heroStats.heroId,
-        heroName: heroStats.heroName,
-        heroSlug: heroStats.heroSlug,
-        role: heroStats.role,
-        matches: totalMatchesSql,
-        wins: sql<number>`COALESCE(SUM(${heroStats.wins}), 0)::int`,
-        kills: sql<number>`COALESCE(SUM(${heroStats.kills}), 0)::int`,
-        deaths: sql<number>`COALESCE(SUM(${heroStats.deaths}), 0)::int`,
-        assists: sql<number>`COALESCE(SUM(${heroStats.assists}), 0)::int`,
+        heroId: playerMatches.heroId,
+        heroName: heroes.name,
+        heroSlug: heroes.slug,
+        role: playerMatches.role,
+        matches: sql<number>`COUNT(*)::int`,
+        wins: sql<number>`COUNT(*) FILTER (WHERE ${playerMatches.won})::int`,
+        kills: sql<number>`COALESCE(SUM(${playerMatches.kills}), 0)::int`,
+        deaths: sql<number>`COALESCE(SUM(${playerMatches.deaths}), 0)::int`,
+        assists: sql<number>`COALESCE(SUM(${playerMatches.assists}), 0)::int`,
       })
-      .from(heroStats)
+      .from(playerMatches)
+      .innerJoin(heroes, eq(playerMatches.heroId, heroes.id))
       .where(where)
-      .groupBy(heroStats.heroId, heroStats.heroName, heroStats.heroSlug, heroStats.role)
-      .having(sql`COALESCE(SUM(${heroStats.matches}), 0) > 0`)
-      .orderBy(desc(sql`COALESCE(SUM(${heroStats.matches}), 0)`))
+      .groupBy(playerMatches.heroId, heroes.name, heroes.slug, playerMatches.role)
+      .orderBy(desc(sql`COUNT(*)`))
       .limit(500)
 
     const totalMatches = rows.reduce((sum, r) => sum + r.matches, 0)
@@ -69,7 +67,7 @@ meta.get('/', async (c) => {
         winRate,
         kda,
         pickRate,
-        role: r.role as HeroStat['role'],
+        role: r.role,
       }
     })
 
