@@ -23,31 +23,6 @@ export const players = pgTable('players', {
   avatar: text('avatar'),
 })
 
-export const heroStats = pgTable(
-  'hero_stats',
-  {
-    id: serial('id').primaryKey(),
-    playerId: text('player_id')
-      .references(() => players.id, { onDelete: 'cascade' })
-      .notNull(),
-    heroId: integer('hero_id').notNull(),
-    heroName: text('hero_name').notNull(),
-    heroSlug: text('hero_slug').notNull(),
-    role: text('role').$type<Role>().notNull(),
-    matches: integer('matches').notNull().default(0),
-    wins: integer('wins').notNull().default(0),
-    kills: integer('kills').notNull().default(0),
-    deaths: integer('deaths').notNull().default(0),
-    assists: integer('assists').notNull().default(0),
-    lastUpdated: timestamp('last_updated').defaultNow(),
-  },
-  (t) => [
-    uniqueIndex('player_hero_idx').on(t.playerId, t.heroId),
-    index('hero_slug_idx').on(t.heroSlug),
-    index('role_idx').on(t.role),
-  ]
-)
-
 export const heroBuilds = pgTable(
   'hero_builds',
   {

@@ -22,6 +22,13 @@
       "when": 1781049600000,
       "tag": "0002_player_matches",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1781049700000,
+      "tag": "0003_drop_hero_stats",
+      "breakpoints": true
     }
   ]
 }
