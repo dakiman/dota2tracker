@@ -17,7 +17,7 @@ FriendTracker is a Dota 2 stats site for tracking a friend group's performance. 
 pnpm install                    # install all deps
 docker compose up -d db         # start only postgres
 pnpm --filter api db:migrate    # run DB migrations
-pnpm seed                       # seed players + sample hero data
+pnpm seed                       # seed players + curated Abaddon build
 pnpm dev:api                    # start API (tsx watch)
 pnpm dev:web                    # start Vite dev server
 ```
