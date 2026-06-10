@@ -22,3 +22,5 @@ CREATE TABLE IF NOT EXISTS "player_matches" (
 );
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS "player_matches_hero_idx" ON "player_matches" ("hero_id");
+--> statement-breakpoint
+CREATE UNIQUE INDEX IF NOT EXISTS "heroes_slug_idx" ON "heroes" ("slug");

@@ -72,11 +72,15 @@ export const heroBuilds = pgTable(
 )
 
 /** OpenDota hero lookup, refreshed by scripts/fetch-data.ts */
-export const heroes = pgTable('heroes', {
-  id: integer('id').primaryKey(),
-  name: text('name').notNull(), // localized, e.g. "Anti-Mage"
-  slug: text('slug').notNull(), // e.g. "antimage"
-})
+export const heroes = pgTable(
+  'heroes',
+  {
+    id: integer('id').primaryKey(),
+    name: text('name').notNull(), // localized, e.g. "Anti-Mage"
+    slug: text('slug').notNull(), // e.g. "antimage"
+  },
+  (t) => [uniqueIndex('heroes_slug_idx').on(t.slug)]
+)
 
 /** One row per player per significant match — source of truth for all stats */
 export const playerMatches = pgTable(
