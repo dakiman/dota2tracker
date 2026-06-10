@@ -49,11 +49,17 @@ heroes.get('/:heroSlug', async (c) => {
       }
     }) ?? buildRows[0]
 
-    const roleTabs: RoleTabStat[] = buildRows.map((r) => ({
-      role: r.role as RoleTabStat['role'],
-      matches: r.totalMatches,
-      winRate: r.winRate,
-    }))
+    // One tab per role; rows are ordered player-specific first, so a player's
+    // build wins over the global one for the same role
+    const roleTabs: RoleTabStat[] = []
+    for (const r of buildRows) {
+      if (roleTabs.some((t) => t.role === r.role)) continue
+      roleTabs.push({
+        role: r.role as RoleTabStat['role'],
+        matches: r.totalMatches,
+        winRate: r.winRate,
+      })
+    }
 
     let buildData: BuildData
     try {

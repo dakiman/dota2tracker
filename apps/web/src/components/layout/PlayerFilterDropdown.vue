@@ -31,7 +31,13 @@ onBeforeUnmount(() => {
 })
 
 function toggle(id: string) {
-  store.toggle(id)
+  // Empty selection means "all players", so unchecking one from that state
+  // should keep everyone else selected, not select only the clicked player.
+  if (store.isAllSelected) {
+    store.setFromQuery(players.value.filter((p) => p.id !== id).map((p) => p.id))
+  } else {
+    store.toggle(id)
+  }
 }
 </script>
 

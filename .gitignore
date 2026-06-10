@@ -5,8 +5,6 @@ coverage
 .env
 .env.local
 *.log
-apps/api/dist
-apps/web/dist
-drizzle
-friendtracker-dota2-stats@*
-pnpm
+*.tsbuildinfo
+# ad-hoc review/debug screenshots at repo root
+/*.png

@@ -93,6 +93,8 @@ In dev, Vite proxies `/api/*` to `localhost:3000`, so the web app doesn't need C
 Insert a row into `hero_builds` with `playerId = null` (global build) or a specific player ID. The `buildData` column is JSONB typed as `BuildData` and `statsData` as `StatsData` — see `packages/shared/src/types.ts` for the full shape.
 
 
-### Local Hosting
-The app is hosted via docker in a docker-compose inside dakis-server directory
-Restart the docker container to get the changes in
+### Hosting
+Production runs on dakis-server-v2 from `/srv/dakis/apps/dota2tracker/compose.yml`, which builds
+images directly from this repo (`~/dev/dota2tracker`). To pick up code changes:
+`cd /srv/dakis && sg docker -c 'docker compose up -d --build dota2tracker-api dota2tracker-web'`.
+Web is on LAN port 8743, Postgres on 5474. See DEPLOY.md for the data pipeline.

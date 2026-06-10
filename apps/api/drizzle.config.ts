@@ -5,6 +5,6 @@ export default defineConfig({
   out: './src/db/migrations',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL ?? 'postgresql://friendtracker:devpassword@localhost:5432/friendtracker',
+    url: process.env.DATABASE_URL ?? 'postgresql://friendtracker:devpassword@localhost:5474/friendtracker',
   },
 })

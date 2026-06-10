@@ -2,28 +2,30 @@
   "name": "friendtracker-dota2-stats",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.15.0",
   "scripts": {
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
     "build": "pnpm -r build",
-    "lint": "pnpm -r lint",
+    "lint": "pnpm --filter @friendtracker/shared build && pnpm -r lint && tsc -p scripts",
     "seed": "pnpm tsx scripts/seed.ts",
     "fetch-data": "pnpm tsx scripts/fetch-data.ts",
     "populate-builds": "pnpm tsx scripts/populate-builds.ts",
     "fetch-hero-builds": "pnpm tsx scripts/fetch-hero-builds.ts",
     "fetch-player-builds": "pnpm tsx scripts/fetch-player-builds.ts",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down",
-    "deploy:home": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-home-server.ps1"
+    "docker:down": "docker compose down"
   },
   "engines": {
-    "node": ">=22.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@friendtracker/shared": "workspace:*"
   },
   "devDependencies": {
     "dotenv": "^16.4.5",
+    "drizzle-orm": "^0.36.0",
     "tsx": "^4.19.0",
     "typescript": "^5.9.2"
   }

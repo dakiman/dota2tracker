@@ -30,10 +30,19 @@ To run the full stack via Docker Compose (API + Web + PostgreSQL), use:
 docker compose up --build
 ```
 
-Then open `http://localhost` in your browser.
+Then open `http://localhost:8743` in your browser.
 
-## GitHub and deployment
+## Deployment
 
-- **[GITHUB.md](./GITHUB.md)** – initialize Git, create the GitHub repo, and push.
-- **[DEPLOY.md](./DEPLOY.md)** – clone on a home server, Docker Compose, env, migrations, and updates (use as Cursor context next to an SSH terminal).
+See **[DEPLOY.md](./DEPLOY.md)** – production layout on dakis-server-v2, redeploy steps, and the data pipeline.
 
+## Known limitations
+
+- **K/D/A sample mismatch**: `fetch-data` stores lifetime `matches`/`wins` from OpenDota but sums
+  kills/deaths/assists from only the last 200 matches, so raw K/D/A totals on the hero page are
+  not lifetime numbers (the KDA ratio is still representative of recent play).
+- **Roles are static**: each hero gets one primary role from `HERO_ROLE_MAP`, not the role
+  actually played in a given match.
+- **API Docker image is oversized**: the production stage copies the whole builder workspace
+  (sources + devDependencies) instead of pruned production deps.
+- **No test runner**: `pnpm lint` type-checks all packages, but there are no unit/integration tests.

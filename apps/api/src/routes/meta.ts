@@ -56,7 +56,7 @@ meta.get('/', async (c) => {
       const winRate = r.matches > 0 ? (r.wins / r.matches) * 100 : 0
       const kda =
         r.deaths > 0
-          ? `${(r.kills + r.assists) / r.deaths}`.replace(/(\.\d{1,2}).*/, '$1')
+          ? ((r.kills + r.assists) / r.deaths).toFixed(2)
           : `${r.kills + r.assists}`
       const pickRate =
         totalMatches > 0 ? (r.matches / totalMatches) * 100 : undefined

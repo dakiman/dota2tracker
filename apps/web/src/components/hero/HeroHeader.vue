@@ -45,7 +45,7 @@ defineProps<{ hero: HeroBuild }>()
         <div class="flex flex-wrap gap-2 mt-2">
           <span
             v-for="tab in hero.roleTabs"
-            :key="tab.role + tab.matches"
+            :key="tab.role"
             class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium capitalize"
             style="background-color: var(--color-dota-bg-light); border: 1px solid var(--color-dota-border);"
           >

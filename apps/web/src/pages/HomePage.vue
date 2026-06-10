@@ -10,18 +10,12 @@ import { RouterLink } from 'vue-router'
     <p class="text-dota-text-dim mb-8">
       DOTA 2 stats for your stack. Pick players and see hero meta and builds.
     </p>
-    <div class="flex gap-4 justify-center">
-      <RouterLink
-        to="/meta"
-        class="px-6 py-3 rounded bg-dota-bg-card border border-dota-border text-dota-gold hover:border-dota-gold-dark transition"
-      >
-        Meta
-      </RouterLink>
+    <div class="flex justify-center">
       <RouterLink
         to="/meta"
         class="px-6 py-3 rounded bg-dota-gold-dark text-dota-bg hover:bg-dota-gold transition"
       >
-        View heroes
+        View hero meta
       </RouterLink>
     </div>
   </div>

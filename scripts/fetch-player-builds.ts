@@ -347,31 +347,13 @@ function aggregateItemBuild(matches: ParsedMatch[]): BuildData['itemBuild'] {
 // Skill build aggregation
 // ---------------------------------------------------------------------------
 
-function aggregateSkillBuild(matches: ParsedMatch[]): SkillBuild[] {
+function aggregateSkillBuild(matches: ParsedMatch[], heroSlug: string): SkillBuild[] {
   const withSkills = matches.filter((m) => m.abilityUpgrades.length > 0)
   if (withSkills.length === 0) return []
 
-  // Collect all ability names seen across matches
-  const allNames = new Set<string>()
-  for (const m of withSkills) {
-    for (const id of m.abilityUpgrades) {
-      const name = abilityIdMap[String(id)]
-      if (name) allNames.add(name)
-    }
-  }
-
-  const regularNames = new Set([...allNames].filter((n) => !n.startsWith('special_bonus_')))
-
-  // Find hero's talent tree from heroAbilitiesMap by matching abilities
-  let heroTalents: Array<{ name: string; level: number }> = []
-  for (const [, info] of Object.entries(heroAbilitiesMap)) {
-    const heroSet = new Set(info.abilities)
-    const overlap = [...regularNames].filter((n) => heroSet.has(n))
-    if (overlap.length >= 2) {
-      heroTalents = info.talents ?? []
-      break
-    }
-  }
+  // Hero's talent tree: heroAbilitiesMap is keyed by npc_dota_hero_<slug>
+  const heroTalents: Array<{ name: string; level: number }> =
+    heroAbilitiesMap[`npc_dota_hero_${heroSlug}`]?.talents ?? []
 
   // Build talent tier map: dotaLevel -> [leftName, rightName]
   const talentTiers = new Map<10 | 15 | 20 | 25, [string, string]>()
@@ -588,7 +570,7 @@ async function main() {
       console.log(`    Aggregating ${parsedMatches.length} parsed matches...`)
 
       const itemBuild = aggregateItemBuild(parsedMatches)
-      const skillBuilds = aggregateSkillBuild(parsedMatches)
+      const skillBuilds = aggregateSkillBuild(parsedMatches, hero.heroSlug)
       const statsData = aggregateStats(parsedMatches)
 
       const buildData: BuildData = { skillBuilds, itemBuild }

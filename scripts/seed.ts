@@ -156,16 +156,8 @@ async function main() {
         kills: h.matches * 5,
         deaths: h.matches * 4,
         assists: h.matches * 8,
-      }).onConflictDoUpdate({
+      }).onConflictDoNothing({
         target: [heroStats.playerId, heroStats.heroId],
-        set: {
-          matches: h.matches,
-          wins: h.wins,
-          kills: h.matches * 5,
-          deaths: h.matches * 4,
-          assists: h.matches * 8,
-          lastUpdated: new Date(),
-        },
       })
     }
   }

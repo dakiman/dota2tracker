@@ -1,0 +1,45 @@
+# Local/dev stack. Production runs from /srv/dakis/apps/dota2tracker/compose.yml
+# on dakis-server-v2 (which builds from this repo).
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: friendtracker
+      POSTGRES_USER: friendtracker
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
+    ports:
+      - "5474:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U friendtracker"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    # nginx.conf in the web image proxies /api/ to this hostname
+    container_name: dota2tracker-api
+    environment:
+      DATABASE_URL: postgresql://friendtracker:${DB_PASSWORD:-devpassword}@db:5432/friendtracker
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    ports:
+      - "8743:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
