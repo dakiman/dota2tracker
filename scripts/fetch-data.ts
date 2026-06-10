@@ -1,13 +1,17 @@
 /**
- * Fetches hero stats from OpenDota API and upserts into hero_stats table.
+ * Syncs the heroes lookup table and each player's full significant-match
+ * history from OpenDota into player_matches. Idempotent: re-runs upsert every
+ * row, picking up lane data for matches parsed since the last run.
  * Run: pnpm fetch-data (from repo root). Requires DATABASE_URL and players in DB.
  */
 import 'dotenv/config'
-import { db, heroStats, players } from '../apps/api/src/db/index.js'
-import { heroNameToSlug, getHeroRole } from '@friendtracker/shared'
+import { sql } from 'drizzle-orm'
+import { db, heroes, playerMatches, players } from '../apps/api/src/db/index.js'
+import { heroNameToSlug, deriveRole } from '@friendtracker/shared'
 
 const OPENDOTA = 'https://api.opendota.com/api'
 const RATE_MS = 1100
+const CHUNK = 500
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms))
@@ -25,18 +29,33 @@ interface OpenDotaHero {
   localized_name: string
 }
 
-interface PlayerHeroRow {
-  hero_id: number
-  games: number
-  win: number
-  last_played: number
-}
+// OpenDota only returns the projected fields; the default (no `significant`
+// param) already excludes turbo and other non-significant game modes.
+const MATCH_PROJECT = [
+  'hero_id',
+  'kills',
+  'deaths',
+  'assists',
+  'duration',
+  'player_slot',
+  'radiant_win',
+  'lane_role',
+  'is_roaming',
+  'start_time',
+].join(',')
 
 interface MatchRow {
+  match_id: number
   hero_id: number
-  kills: number
-  deaths: number
-  assists: number
+  kills: number | null
+  deaths: number | null
+  assists: number | null
+  duration: number
+  player_slot: number
+  radiant_win: boolean
+  lane_role: number | null
+  is_roaming: boolean | null
+  start_time: number
 }
 
 async function main() {
@@ -46,76 +65,63 @@ async function main() {
     process.exit(0)
   }
 
-  const heroes = (await fetchJson<OpenDotaHero[]>(`${OPENDOTA}/heroes`)) as OpenDotaHero[]
+  const heroList = await fetchJson<OpenDotaHero[]>(`${OPENDOTA}/heroes`)
   await sleep(RATE_MS)
+  for (const h of heroList) {
+    const values = { id: h.id, name: h.localized_name, slug: heroNameToSlug(h.name) }
+    await db.insert(heroes).values(values).onConflictDoUpdate({
+      target: heroes.id,
+      set: { name: values.name, slug: values.slug },
+    })
+  }
+  console.log(`Synced ${heroList.length} heroes.`)
 
-  const heroById = new Map(heroes.map((h) => [h.id, h]))
+  const heroIds = new Set(heroList.map((h) => h.id))
 
   for (const player of playerRows) {
-    const pid = player.id
-    const [playerHeroes, matches] = await Promise.all([
-      fetchJson<PlayerHeroRow[]>(`${OPENDOTA}/players/${pid}/heroes`),
-      fetchJson<MatchRow[]>(`${OPENDOTA}/players/${pid}/matches?limit=200`),
-    ])
+    const matches = await fetchJson<MatchRow[]>(
+      `${OPENDOTA}/players/${player.id}/matches?project=${MATCH_PROJECT}`
+    )
     await sleep(RATE_MS)
 
-    const kdaByHero: Record<
-      number,
-      { kills: number; deaths: number; assists: number }
-    > = {}
-    for (const m of matches) {
-      const cur = kdaByHero[m.hero_id] ?? {
-        kills: 0,
-        deaths: 0,
-        assists: 0,
-      }
-      cur.kills += m.kills
-      cur.deaths += m.deaths
-      cur.assists += m.assists
-      kdaByHero[m.hero_id] = cur
-    }
+    const rows = matches
+      .filter((m) => heroIds.has(m.hero_id))
+      .map((m) => ({
+        playerId: player.id,
+        matchId: m.match_id,
+        heroId: m.hero_id,
+        won: (m.player_slot < 128) === m.radiant_win,
+        kills: m.kills ?? 0,
+        deaths: m.deaths ?? 0,
+        assists: m.assists ?? 0,
+        duration: m.duration,
+        startTime: new Date(m.start_time * 1000),
+        laneRole: m.lane_role ?? null,
+        isRoaming: m.is_roaming ?? null,
+        role: deriveRole(m.lane_role, m.is_roaming, m.hero_id),
+      }))
 
-    for (const ph of playerHeroes) {
-      if (ph.games === 0) continue
-      const hero = heroById.get(ph.hero_id)
-      if (!hero) continue
-      const slug = heroNameToSlug(hero.name)
-      const role = getHeroRole(ph.hero_id)
-      const kda = kdaByHero[ph.hero_id] ?? {
-        kills: 0,
-        deaths: 0,
-        assists: 0,
-      }
+    for (let i = 0; i < rows.length; i += CHUNK) {
       await db
-        .insert(heroStats)
-        .values({
-          playerId: pid,
-          heroId: ph.hero_id,
-          heroName: hero.localized_name,
-          heroSlug: slug,
-          role,
-          matches: ph.games,
-          wins: ph.win,
-          kills: kda.kills,
-          deaths: kda.deaths,
-          assists: kda.assists,
-        })
+        .insert(playerMatches)
+        .values(rows.slice(i, i + CHUNK))
         .onConflictDoUpdate({
-          target: [heroStats.playerId, heroStats.heroId],
+          target: [playerMatches.playerId, playerMatches.matchId],
           set: {
-            heroName: hero.localized_name,
-            heroSlug: slug,
-            role,
-            matches: ph.games,
-            wins: ph.win,
-            kills: kda.kills,
-            deaths: kda.deaths,
-            assists: kda.assists,
-            lastUpdated: new Date(),
+            heroId: sql`excluded.hero_id`,
+            won: sql`excluded.won`,
+            kills: sql`excluded.kills`,
+            deaths: sql`excluded.deaths`,
+            assists: sql`excluded.assists`,
+            duration: sql`excluded.duration`,
+            startTime: sql`excluded.start_time`,
+            laneRole: sql`excluded.lane_role`,
+            isRoaming: sql`excluded.is_roaming`,
+            role: sql`excluded.role`,
           },
         })
     }
-    console.log(`Updated hero_stats for player ${player.name} (${pid})`)
+    console.log(`Upserted ${rows.length} matches for ${player.name} (${player.id})`)
   }
 
   console.log('Fetch done.')
