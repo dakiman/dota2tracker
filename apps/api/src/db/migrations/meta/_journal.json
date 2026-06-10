@@ -15,6 +15,13 @@
       "when": 1742688000000,
       "tag": "0001_partial_hero_builds_idx",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781049600000,
+      "tag": "0002_player_matches",
+      "breakpoints": true
     }
   ]
 }
