@@ -38,11 +38,7 @@ See **[DEPLOY.md](./DEPLOY.md)** – production layout on dakis-server-v2, redep
 
 ## Known limitations
 
-- **K/D/A sample mismatch**: `fetch-data` stores lifetime `matches`/`wins` from OpenDota but sums
-  kills/deaths/assists from only the last 200 matches, so raw K/D/A totals on the hero page are
-  not lifetime numbers (the KDA ratio is still representative of recent play).
-- **Roles are static**: each hero gets one primary role from `HERO_ROLE_MAP`, not the role
-  actually played in a given match.
-- **API Docker image is oversized**: the production stage copies the whole builder workspace
-  (sources + devDependencies) instead of pruned production deps.
+- **Role detection is a lane heuristic**: parsed matches use OpenDota lane data
+  (support vs core within a lane decided by the hero's typical role); unparsed matches fall
+  back to the static `HERO_ROLE_MAP`. OpenDota has no true position data.
 - **No test runner**: `pnpm lint` type-checks all packages, but there are no unit/integration tests.

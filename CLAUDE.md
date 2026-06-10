@@ -59,12 +59,15 @@ Copy `.env.example` to `.env`. Key variables:
 
 ### Data flow
 1. **Seed** (`scripts/seed.ts`) inserts players and a curated Abaddon build into postgres.
-2. **Fetch** (`scripts/fetch-data.ts`) calls OpenDota API to upsert `hero_stats` per player.
+2. **Fetch** (`scripts/fetch-data.ts`) syncs the `heroes` lookup and each player's full
+   significant-match history from OpenDota into `player_matches` (role derived per match).
 3. **API** serves aggregated stats; frontend never calls OpenDota directly.
 
 ### Database schema (Drizzle, `apps/api/src/db/schema.ts`)
 - `players` — tracked Steam players (id = Steam account ID string)
-- `hero_stats` — per-player per-hero aggregate stats; unique on `(player_id, hero_id)`
+- `player_matches` — one row per player per significant match (won, K/D/A, duration, lane data,
+  derived role); PK `(player_id, match_id)`; source of truth for all stats
+- `heroes` — OpenDota hero lookup (`id`, `name`, `slug`), refreshed by fetch-data
 - `hero_builds` — curated build data (items, skills, talents); unique on `(hero_slug, role, player_id)`; `player_id` can be NULL for global/default builds
 
 ### API routes (`apps/api/src/routes/`)
