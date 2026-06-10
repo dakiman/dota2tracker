@@ -27,7 +27,7 @@ From the repo root, with `DATABASE_URL` pointing at the published Postgres port:
 ```bash
 export DATABASE_URL='postgresql://friendtracker:<password>@localhost:5474/friendtracker'
 pnpm seed                 # players + curated Abaddon build (insert-only, won't clobber)
-pnpm fetch-data           # per-player hero stats from OpenDota
+pnpm fetch-data           # full per-player match history from OpenDota
 pnpm populate-builds      # global hero_builds rows from aggregated stats
 pnpm fetch-hero-builds    # global item builds / duration stats from OpenDota
 pnpm fetch-player-builds  # per-player builds from parsed match details (slow)
