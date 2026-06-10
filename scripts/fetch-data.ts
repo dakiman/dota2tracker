@@ -32,6 +32,7 @@ interface OpenDotaHero {
 // OpenDota only returns the projected fields; the default (no `significant`
 // param) already excludes turbo and other non-significant game modes.
 const MATCH_PROJECT = [
+  'match_id',
   'hero_id',
   'kills',
   'deaths',
@@ -52,7 +53,7 @@ interface MatchRow {
   assists: number | null
   duration: number
   player_slot: number
-  radiant_win: boolean
+  radiant_win: boolean | null
   lane_role: number | null
   is_roaming: boolean | null
   start_time: number
@@ -85,7 +86,8 @@ async function main() {
     await sleep(RATE_MS)
 
     const rows = matches
-      .filter((m) => heroIds.has(m.hero_id))
+      // radiant_win can be null (hidden/ancient matches) — result unknown, skip
+      .filter((m): m is MatchRow & { radiant_win: boolean } => m.radiant_win !== null && heroIds.has(m.hero_id))
       .map((m) => ({
         playerId: player.id,
         matchId: m.match_id,
