@@ -5,7 +5,7 @@
  * Run: pnpm populate-builds (from repo root). Requires DATABASE_URL.
  */
 import 'dotenv/config'
-import { db, heroStats, heroBuilds, and, eq, isNull } from '../apps/api/src/db/index.js'
+import { db, playerMatches, heroes, heroBuilds, and, eq, isNull } from '../apps/api/src/db/index.js'
 import { sql } from 'drizzle-orm'
 import type { BuildData, Role } from '@friendtracker/shared'
 
@@ -23,18 +23,18 @@ const emptyBuildData: BuildData = {
 async function main() {
   const rows = await db
     .select({
-      heroId: heroStats.heroId,
-      heroName: heroStats.heroName,
-      heroSlug: heroStats.heroSlug,
-      role: heroStats.role,
-      totalMatches: sql<number>`SUM(${heroStats.matches})::int`,
-      wins: sql<number>`SUM(${heroStats.wins})::int`,
+      heroId: playerMatches.heroId,
+      heroName: heroes.name,
+      heroSlug: heroes.slug,
+      role: playerMatches.role,
+      totalMatches: sql<number>`COUNT(*)::int`,
+      wins: sql<number>`COUNT(*) FILTER (WHERE ${playerMatches.won})::int`,
     })
-    .from(heroStats)
-    .groupBy(heroStats.heroId, heroStats.heroName, heroStats.heroSlug, heroStats.role)
-    .having(sql`SUM(${heroStats.matches}) > 0`)
+    .from(playerMatches)
+    .innerJoin(heroes, eq(playerMatches.heroId, heroes.id))
+    .groupBy(playerMatches.heroId, heroes.name, heroes.slug, playerMatches.role)
 
-  console.log(`Found ${rows.length} hero+role combinations in hero_stats.`)
+  console.log(`Found ${rows.length} hero+role combinations in player_matches.`)
 
   let inserted = 0
   let updated = 0

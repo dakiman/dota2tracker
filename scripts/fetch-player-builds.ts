@@ -7,7 +7,7 @@
  * Run: pnpm fetch-player-builds (from repo root). Requires DATABASE_URL + players in DB.
  */
 import 'dotenv/config'
-import { db, heroStats, heroBuilds, players, and, eq } from '../apps/api/src/db/index.js'
+import { db, playerMatches, heroes, heroBuilds, players, and, eq } from '../apps/api/src/db/index.js'
 import { sql } from 'drizzle-orm'
 import { getHeroRole } from '@friendtracker/shared'
 import type {
@@ -517,13 +517,15 @@ async function main() {
 
     const playerHeroRows = await db
       .select({
-        heroId: heroStats.heroId,
-        heroName: heroStats.heroName,
-        heroSlug: heroStats.heroSlug,
-        matches: heroStats.matches,
+        heroId: playerMatches.heroId,
+        heroName: heroes.name,
+        heroSlug: heroes.slug,
+        matches: sql<number>`COUNT(*)::int`,
       })
-      .from(heroStats)
-      .where(eq(heroStats.playerId, pid))
+      .from(playerMatches)
+      .innerJoin(heroes, eq(playerMatches.heroId, heroes.id))
+      .where(eq(playerMatches.playerId, pid))
+      .groupBy(playerMatches.heroId, heroes.name, heroes.slug)
 
     for (const hero of playerHeroRows) {
       if (hero.matches < MIN_PARSED_MATCHES) {
