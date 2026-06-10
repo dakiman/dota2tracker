@@ -169,3 +169,31 @@ export const DEFAULT_ROLE: Role = 'support'
 export function getHeroRole(heroId: number): Role {
   return HERO_ROLE_MAP[heroId] ?? DEFAULT_ROLE
 }
+
+const SUPPORT_ROLES: ReadonlySet<Role> = new Set(['support', 'hard_support'])
+
+/**
+ * Derive the role actually played in a match from OpenDota lane data.
+ * lane_role: 1 = safe lane, 2 = mid, 3 = offlane, 4 = jungle; null until the
+ * match is parsed. HERO_ROLE_MAP decides support vs core within a lane and is
+ * the fallback for unparsed matches.
+ */
+export function deriveRole(
+  laneRole: number | null | undefined,
+  isRoaming: boolean | null | undefined,
+  heroId: number
+): Role {
+  const supportFlavored = SUPPORT_ROLES.has(getHeroRole(heroId))
+  if (isRoaming) return 'support'
+  switch (laneRole) {
+    case 1:
+      return supportFlavored ? 'hard_support' : 'carry'
+    case 2:
+      return 'mid'
+    case 3:
+    case 4:
+      return supportFlavored ? 'support' : 'offlane'
+    default:
+      return getHeroRole(heroId)
+  }
+}
