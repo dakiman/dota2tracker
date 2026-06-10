@@ -43,7 +43,10 @@ const MATCH_PROJECT = [
   'lane_role',
   'is_roaming',
   'start_time',
-].join(',')
+]
+  // OpenDota expects repeated project params, not a comma-separated list
+  .map((f) => `project=${f}`)
+  .join('&')
 
 interface MatchRow {
   match_id: number
@@ -81,7 +84,7 @@ async function main() {
 
   for (const player of playerRows) {
     const matches = await fetchJson<MatchRow[]>(
-      `${OPENDOTA}/players/${player.id}/matches?project=${MATCH_PROJECT}`
+      `${OPENDOTA}/players/${player.id}/matches?${MATCH_PROJECT}`
     )
     await sleep(RATE_MS)
 
