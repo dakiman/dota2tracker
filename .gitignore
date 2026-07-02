@@ -8,3 +8,4 @@ coverage
 *.tsbuildinfo
 # ad-hoc review/debug screenshots at repo root
 /*.png
+.worktrees/
