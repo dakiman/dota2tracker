@@ -4,6 +4,11 @@
 2026-07-02; detailed implementation plan (per-phase work items, feasibility, estimates)
 in `docs/superpowers/plans/2026-07-02-roadmap-implementation-plan.md`.*
 
+**Status 2026-07-02 (post-implementation):** Phases 1 and 2 are **implemented and merged
+to main** (`5403587`) via the executable plans in `docs/superpowers/plans/` (both plan docs
+have their checkboxes ticked and double as build logs). **Next up: Phase 2.5.** The only
+Phase 1/2 remainder is the operator prod rollout — see the note in Phase 1 below.
+
 This is the single source of truth for **where the product is going**. Architecture and
 commands live in `CLAUDE.md`; the code review itself (with per-finding detail) is in
 `fable-review.md`.
@@ -24,10 +29,24 @@ answered.
 
 FriendTracker is a read-only Dota 2 stats site for a fixed friend group. `player_matches`
 (one row per player per significant match, role derived per match) is the single source of
-truth for all stats. There is **no auth** — the `players` table is hand-seeded, CORS is
-wide open (`apps/api/src/index.ts:12`), and there's no rate limiting or session handling.
-Data is refreshed by **manually run scripts** (`pnpm fetch-data` → `populate-builds` →
-`fetch-hero-builds` → `fetch-player-builds`, now chainable via `pnpm refresh`).
+truth for all stats. There is **no auth** — the `players` table is hand-seeded and there's
+no rate limiting or session handling (CORS middleware is gone; the API is same-origin
+behind nginx/Vite proxies). Data refresh is **automated**: a `refresh` sidecar container
+runs the pipeline on a cron (6 h match sync, daily build fetch), every job logs to
+`refresh_runs`, and the web footer shows data age. Manual runs still work
+(`pnpm fetch-data` etc., all routed through `scripts/run-job.ts`).
+
+Ops reality: the prod stack on `/srv/dakis` is **intentionally kept stopped** and started
+on demand — treat "prod is down" as normal, never as an incident. The refresh container's
+entrypoint runs a full refresh on start, so each prod start self-heals freshness.
+
+Dev environment on this host: the repo's compose Postgres runs as project `dota2tracker`
+(`sg docker -c 'docker compose -p dota2tracker up -d db'` → container `dota2tracker-db-1`,
+volume `dota2tracker_pgdata`, published on **5474**). It's fully migrated (0000–0005,
+drizzle bookkeeping in place) and seeded with real data (~7 k matches, 3 players).
+**It shares port 5474 with the prod db container** — stop one before starting the other.
+Ports 3000 (jira-rag) and 8743/5474 (prod, when up) are owned by other services; the dev
+API honors `PORT` for verification runs.
 
 ### Recently completed — do not re-propose
 - **Match-level-stats refactor** (2026-06-10): `player_matches` became source of truth,
@@ -42,13 +61,25 @@ Data is refreshed by **manually run scripts** (`pnpm fetch-data` → `populate-b
   (no more N+1), `populate-builds` prunes stale empty rows (curated builds spared),
   `fetch-player-builds` keys builds by the player's real dominant role, `pnpm refresh`
   added, dead `@shared/*` alias removed, `SkillBuildCard` title lie fixed.
+- **Phase 1 — Data freshness** (2026-07-02, merged in `b3d62ab`…`85bf0fc`): `refresh_runs`
+  job-log table (migration 0004), scripts converted to `export async function run()` +
+  `scripts/run-job.ts` wrapper, `request-parses` job, `lastRefreshed` on `/api/config` +
+  data-age footer, `infra/refresh/` cron container wired into `docker-compose.yml`.
+- **Phase 2 — Hardening** (2026-07-02, merged in `c63a42f`…`5403587`): `app.ts`/`index.ts`
+  split, vitest (24 tests: pure aggregators lifted to `scripts/lib/`, route tests via
+  `app.request()` against a throwaway `friendtracker_test` DB), CORS middleware removed,
+  graceful shutdown (SIGTERM → `server.close()` + `pool.end()`, container stops in <1 s),
+  `timestamptz` migration (0005) applied.
 
 ---
 
-## Phase 1 — Data freshness (highest leverage, do first) — ~1 day
+## Phase 1 — Data freshness — ✅ DONE 2026-07-02
 
-The single biggest gap that isn't a feature. Everything is manual-run scripts, so stats go
-stale the moment the operator stops running them. Prerequisite for a multi-user site.
+All items below shipped (see the ticked plan doc for the build log). **Remaining: operator
+prod rollout only** (Phase 1 plan, Task 7 steps 3–6): add the `refresh` service to the prod
+compose in `/srv/dakis/apps/dota2tracker/`, rebuild api/web from this repo, verify the
+data-age footer on :8743, commit `/srv/dakis`. dakiman does this by hand when he next
+starts the stack — agents should not touch `/srv/dakis` for this.
 
 - **Refresh container** — `dota2tracker-refresh` service in the prod compose (built from
   this repo: workspace + `tsx` + supercronic or a sleep loop), per the `/srv/dakis`
@@ -68,10 +99,11 @@ stale the moment the operator stops running them. Prerequisite for a multi-user 
   scripts, restructure each as `export async function run()` with a thin CLI `main()`,
   so the API can later invoke fetches without shelling out.
 
-## Phase 2 — Hardening (prerequisite for accounts) — ~1–2 days
+## Phase 2 — Hardening — ✅ DONE 2026-07-02
 
-Fine for a read-only LAN site but **must** land before/with accounts. From
-`fable-review.md` §3/§8. Do the split + tests first; the rest in any order.
+All items below shipped except rate limiting, which stays deferred to Phase 3a as decided.
+`pnpm test` is now a real gate (vitest, needs the local compose Postgres; uses a throwaway
+`friendtracker_test` DB).
 
 - **Split `app.ts` (construction) from `index.ts` (bootstrap)** — today migrations +
   serve run at import time (`index.ts:20-32`), which blocks testing routes with
@@ -89,7 +121,7 @@ Fine for a read-only LAN site but **must** land before/with accounts. From
 - **Rate limiting: deferred to Phase 3a** *(changed)* — nothing mutates yet;
   `hono-rate-limiter` is a 20-minute add and lands with the first mutating endpoint.
 
-## Phase 2.5 — Product wins on existing data *(new)* — ~2–3 days, each item independently shippable
+## Phase 2.5 — Product wins on existing data — **← NEXT UP** — ~2–3 days, each item independently shippable
 
 `player_matches` already supports friend-group features that need **no auth and no
 schema surgery** — worth shipping before the accounts arc so the site gets better for
@@ -155,6 +187,13 @@ From `fable-review.md` §3/§7:
 
 ## Standing tasks (not phase-gated)
 
+- **Drizzle snapshots out of sync** *(added 2026-07-02, hit twice during Phase 1/2)* —
+  migrations 0001–0005 were hand-written with manual `_journal.json` entries and no
+  `meta/` snapshots, so `pnpm --filter api db:generate` diffs against the stale 0000
+  snapshot and prompts interactively. Until snapshots are regenerated, **hand-write new
+  migrations** (follow the 0004/0005 convention: `IF NOT EXISTS`-style idempotent SQL +
+  a journal entry). Fix properly before Phase 3's schema work (`users`, `sessions`,
+  `leagues` tables) — that phase generates too many migrations to hand-write.
 - **Backups** *(added)* — nightly `pg_dump` to `/srv/dakis/data/dota2tracker-backups/`,
   7-day rotation; trivial once the Phase 1 refresh container exists; **mandatory before
   Phase 3** (user-generated data).
@@ -169,7 +208,9 @@ From `fable-review.md` §3/§7:
 
 - **Low parsed coverage** — only ~4% of matches are OpenDota-parsed, so most per-match
   roles fall back to the static hero→role map, and per-player builds draw on small
-  samples. → Now actively addressed by the Phase 1 parse-request job.
+  samples. → The Phase 1 `request-parses` job now runs after every scheduled `fetch-data`
+  (only *recent* unparsed matches, capped per run), so coverage improves going forward
+  but the historical backlog stays unparsed.
 - **Chipe (78589430) has no public OpenDota data** — needs "Expose Public Match Data"
   enabled in his Dota client; until then his stats are absent. → Phase 3b's validation
   flow surfaces this in the UI and makes his onboarding self-service once he flips it.
