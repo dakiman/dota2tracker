@@ -32,7 +32,7 @@
 - Consumes: existing Drizzle schema helpers.
 - Produces: `refreshRuns` table object (columns `id`, `job`, `startedAt`, `finishedAt`, `ok`, `detail`) and `pool` (a `pg.Pool`), both importable from `apps/api/src/db/index.js`. Task 3's `run-job.ts` and Task 5's config route rely on these exact names.
 
-- [ ] **Step 1: Export the pool from `apps/api/src/db/index.ts`**
+- [x] **Step 1: Export the pool from `apps/api/src/db/index.ts`**
 
 Replace lines 10–11:
 
@@ -50,7 +50,7 @@ export const db = drizzle(pool, { schema })
 
 (If `pool` is already exported — the Phase 2 plan also adds this — skip this step.)
 
-- [ ] **Step 2: Add the `refreshRuns` table to `apps/api/src/db/schema.ts`**
+- [x] **Step 2: Add the `refreshRuns` table to `apps/api/src/db/schema.ts`**
 
 Append at the end of the file (after `playerMatches`):
 
@@ -68,27 +68,27 @@ export const refreshRuns = pgTable('refresh_runs', {
 
 All helpers used (`pgTable`, `serial`, `text`, `timestamp`, `boolean`, `jsonb`) are already imported at the top of the file.
 
-- [ ] **Step 3: Generate the migration**
+- [x] **Step 3: Generate the migration**
 
 Run: `pnpm --filter api db:generate --name refresh_runs`
 Expected: a new file `apps/api/src/db/migrations/0004_refresh_runs.sql` containing `CREATE TABLE "refresh_runs" (...)` (drizzle may quote/format slightly differently; the table and 6 columns must be present). Open the file and confirm it only creates `refresh_runs` — it must NOT alter any existing table (if it does, the schema edit went wrong; stop and re-check Step 2).
 
-- [ ] **Step 4: Apply the migration locally**
+- [x] **Step 4: Apply the migration locally**
 
 Run: `sg docker -c 'docker compose up -d db'` then `pnpm --filter api db:migrate`
 Expected: exits 0.
 
-- [ ] **Step 5: Verify the table exists**
+- [x] **Step 5: Verify the table exists**
 
 Run: `sg docker -c 'docker compose exec db psql -U friendtracker -c "\\d refresh_runs"'`
 Expected: table listing with columns `id`, `job`, `started_at` (timestamp with time zone), `finished_at`, `ok`, `detail`.
 
-- [ ] **Step 6: Type-check**
+- [x] **Step 6: Type-check**
 
 Run: `pnpm lint`
 Expected: exits 0.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/api/src/db/
@@ -105,7 +105,7 @@ git commit -m "db: add refresh_runs job log table, export pg pool"
 **Interfaces:**
 - Produces: `fetchJson<T>(url: string, init?: RequestInit): Promise<T>` — Task 4's parse-request script passes `{ method: 'POST' }`. Existing GET callers are unaffected (parameter is optional).
 
-- [ ] **Step 1: Thread `init` through to `fetch`**
+- [x] **Step 1: Thread `init` through to `fetch`**
 
 Replace the `fetchJson` function in `scripts/lib/opendota.ts` with:
 
@@ -126,12 +126,12 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> 
 }
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm lint`
 Expected: exits 0.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add scripts/lib/opendota.ts
@@ -154,7 +154,7 @@ git commit -m "scripts: fetchJson accepts RequestInit for POST parse requests"
 - Consumes: `refreshRuns`, `pool` from Task 1.
 - Produces: each script exports `run(): Promise<string>` (the returned string is a one-line human summary stored in `refresh_runs.detail.summary`). `scripts/run-job.ts <job-name>` is the only CLI entrypoint from now on; `pnpm fetch-data` etc. keep working because package.json routes them through it. **No script self-executes on import anymore** — this is what makes them importable by the API later (Phase 3) and by tests.
 
-- [ ] **Step 1: Convert `scripts/fetch-data.ts` to an exported `run()`**
+- [x] **Step 1: Convert `scripts/fetch-data.ts` to an exported `run()`**
 
 Three edits:
 
@@ -183,7 +183,7 @@ main().catch((e) => {
 })
 ```
 
-- [ ] **Step 2: Convert `scripts/populate-builds.ts`**
+- [x] **Step 2: Convert `scripts/populate-builds.ts`**
 
 Change `async function main() {` to `export async function run(): Promise<string> {`. Replace the final `console.log(...)` statement of the function with:
 
@@ -193,7 +193,7 @@ Change `async function main() {` to `export async function run(): Promise<string
 
 Delete the `main().catch(...)` footer (same three-line pattern as Step 1c).
 
-- [ ] **Step 3: Convert `scripts/fetch-hero-builds.ts`**
+- [x] **Step 3: Convert `scripts/fetch-hero-builds.ts`**
 
 Change `async function main() {` to `export async function run(): Promise<string> {`. Replace the final `console.log(\`\nfetch-hero-builds done: ...\`)` with:
 
@@ -203,7 +203,7 @@ Change `async function main() {` to `export async function run(): Promise<string
 
 Delete the `main().catch(...)` footer.
 
-- [ ] **Step 4: Convert `scripts/fetch-player-builds.ts`**
+- [x] **Step 4: Convert `scripts/fetch-player-builds.ts`**
 
 Change `async function main() {` (line ~488) to `export async function run(): Promise<string> {`. Change the no-players early exit from `console.log('No players in DB. Run seed first.'); process.exit(0)` to `return 'no players in DB — run seed first'`. Replace the final `console.log(\`\nfetch-player-builds done: ...\`)` with:
 
@@ -213,7 +213,7 @@ Change `async function main() {` (line ~488) to `export async function run(): Pr
 
 Delete the `main().catch(...)` footer.
 
-- [ ] **Step 5: Create `scripts/run-job.ts`**
+- [x] **Step 5: Create `scripts/run-job.ts`**
 
 ```ts
 /**
@@ -274,7 +274,7 @@ main().catch((e) => {
 })
 ```
 
-- [ ] **Step 6: Route the root package.json scripts through run-job**
+- [x] **Step 6: Route the root package.json scripts through run-job**
 
 In root `package.json`, replace the five pipeline script entries (leave `seed` untouched — it is a one-off, not a scheduled job):
 
@@ -286,12 +286,12 @@ In root `package.json`, replace the five pipeline script entries (leave `seed` u
     "refresh": "pnpm fetch-data && pnpm populate-builds && pnpm fetch-hero-builds && pnpm fetch-player-builds",
 ```
 
-- [ ] **Step 7: Type-check**
+- [x] **Step 7: Type-check**
 
 Run: `pnpm lint`
 Expected: exits 0. (Common failure: a leftover `main().catch` footer referencing a renamed function.)
 
-- [ ] **Step 8: Verify end-to-end against the local DB**
+- [x] **Step 8: Verify end-to-end against the local DB**
 
 Run: `pnpm fetch-data` (db must be up and seeded; if empty, run `pnpm seed` first)
 Expected output ends with: `[run-job] fetch-data ok: synced <N> heroes; upserted <M> match rows for <P> players`, and the process **exits promptly** (pool.end() — no 10 s hang).
@@ -299,17 +299,17 @@ Expected output ends with: `[run-job] fetch-data ok: synced <N> heroes; upserted
 Run: `pnpm populate-builds`
 Expected: `[run-job] populate-builds ok: ...`
 
-- [ ] **Step 9: Verify the refresh_runs rows**
+- [x] **Step 9: Verify the refresh_runs rows**
 
 Run: `sg docker -c 'docker compose exec db psql -U friendtracker -c "SELECT id, job, ok, started_at, finished_at, detail FROM refresh_runs ORDER BY id DESC LIMIT 5"'`
 Expected: one row per job just run, `ok = t`, non-null `finished_at`, `detail` containing the summary string.
 
-- [ ] **Step 10: Verify the failure path**
+- [x] **Step 10: Verify the failure path**
 
 Run: `DATABASE_URL='postgresql://friendtracker:devpassword@localhost:5474/friendtracker' pnpm tsx scripts/run-job.ts no-such-job; echo "exit=$?"`
 Expected: usage message and `exit=2`.
 
-- [ ] **Step 11: Commit**
+- [x] **Step 11: Commit**
 
 ```bash
 git add scripts/ package.json
@@ -329,7 +329,7 @@ git commit -m "scripts: export run() from pipeline jobs, add run-job wrapper wit
 - Consumes: `fetchJson(url, init)` from Task 2; `playerMatches` schema; `run-job.ts` registry from Task 3.
 - Produces: `run(): Promise<string>` in `scripts/request-parses.ts`; job name `request-parses` runnable via run-job. Task 6's crontab calls it on the 6-hourly chain.
 
-- [ ] **Step 1: Create `scripts/request-parses.ts`**
+- [x] **Step 1: Create `scripts/request-parses.ts`**
 
 ```ts
 /**
@@ -374,7 +374,7 @@ export async function run(): Promise<string> {
 }
 ```
 
-- [ ] **Step 2: Register the job**
+- [x] **Step 2: Register the job**
 
 In `scripts/run-job.ts`, add to the `JOBS` map:
 
@@ -388,17 +388,17 @@ In root `package.json`, add next to the other pipeline scripts:
     "request-parses": "pnpm tsx scripts/run-job.ts request-parses",
 ```
 
-- [ ] **Step 3: Type-check**
+- [x] **Step 3: Type-check**
 
 Run: `pnpm lint`
 Expected: exits 0.
 
-- [ ] **Step 4: Verify live**
+- [x] **Step 4: Verify live**
 
 Run: `pnpm request-parses`
 Expected: `[run-job] request-parses ok: requested parse for K/N unparsed recent matches` (K may be 0 if there are no recent unparsed matches — that is a pass; the interesting assertion is a clean `ok` run and a new `refresh_runs` row, check with the psql command from Task 3 Step 9).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add scripts/request-parses.ts scripts/run-job.ts package.json
@@ -420,7 +420,7 @@ git commit -m "scripts: add request-parses job to improve parsed-match coverage"
 - Consumes: `refreshRuns` from Task 1; job name `'fetch-data'` written by Task 3.
 - Produces: `AppConfig.lastRefreshed: string | null` (ISO timestamp of the last successful fetch-data run); `relativeTime(iso: string): string` helper; footer in `App.vue`.
 
-- [ ] **Step 1: Extend the shared type**
+- [x] **Step 1: Extend the shared type**
 
 In `packages/shared/src/types.ts`, add to the `AppConfig` interface (alongside `siteName` and `players`):
 
@@ -429,7 +429,7 @@ In `packages/shared/src/types.ts`, add to the `AppConfig` interface (alongside `
   lastRefreshed: string | null
 ```
 
-- [ ] **Step 2: Return it from the config route**
+- [x] **Step 2: Return it from the config route**
 
 Replace `apps/api/src/routes/config.ts` with:
 
@@ -470,7 +470,7 @@ config.get('/', async (c) => {
 export default config
 ```
 
-- [ ] **Step 3: Create `apps/web/src/utils/relativeTime.ts`**
+- [x] **Step 3: Create `apps/web/src/utils/relativeTime.ts`**
 
 ```ts
 const UNITS: Array<[Intl.RelativeTimeFormatUnit, number]> = [
@@ -490,11 +490,11 @@ export function relativeTime(iso: string): string {
 }
 ```
 
-- [ ] **Step 4: Surface it in the config store**
+- [x] **Step 4: Surface it in the config store**
 
 In `apps/web/src/stores/config.ts`: add `const lastRefreshed = ref<string | null>(null)` next to the `players` ref; inside `load()` after `players.value = cfg.players` add `lastRefreshed.value = cfg.lastRefreshed`; add `lastRefreshed` to the returned object.
 
-- [ ] **Step 5: Render the footer in `apps/web/src/App.vue`**
+- [x] **Step 5: Render the footer in `apps/web/src/App.vue`**
 
 Add the import to the script block:
 
@@ -513,21 +513,21 @@ and add a footer inside the root `div`, after `</main>`:
     </footer>
 ```
 
-- [ ] **Step 6: Type-check**
+- [x] **Step 6: Type-check**
 
 Run: `pnpm lint`
 Expected: exits 0.
 
-- [ ] **Step 7: Verify the API payload**
+- [x] **Step 7: Verify the API payload**
 
 With the local db up (it has refresh_runs rows from Task 3), run: `pnpm dev:api &` then `curl -s http://localhost:3000/api/config | head -c 400`, then kill the dev server.
 Expected: JSON containing `"lastRefreshed":"20..."` (an ISO timestamp, not null).
 
-- [ ] **Step 8: Verify the footer visually (optional but recommended)**
+- [x] **Step 8: Verify the footer visually (optional but recommended)**
 
 Run `pnpm dev:api` and `pnpm dev:web`, open `http://localhost:5173` — footer shows "Data updated N minutes ago". Stop both.
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add packages/shared/src/types.ts apps/api/src/routes/config.ts apps/web/src/
@@ -548,7 +548,7 @@ git commit -m "feat: expose lastRefreshed on /api/config, render data-age footer
 - Consumes: `scripts/run-job.ts` job names from Tasks 3–4; `DATABASE_URL` env var (scripts read it via dotenv/env).
 - Produces: a `refresh` compose service (prod will name it `dota2tracker-refresh`, Task 7). Image runs BusyBox `crond` as PID 1; job output is redirected to `/proc/1/fd/1` so it lands in `docker logs`.
 
-- [ ] **Step 1: Create `infra/refresh/Dockerfile`**
+- [x] **Step 1: Create `infra/refresh/Dockerfile`**
 
 ```dockerfile
 # Scheduled data-refresh runner: full pnpm workspace + tsx so the pipeline
@@ -572,7 +572,7 @@ RUN chmod +x /entrypoint.sh
 CMD ["/entrypoint.sh"]
 ```
 
-- [ ] **Step 2: Create `infra/refresh/crontab`** (BusyBox format; must end with a newline; times are UTC)
+- [x] **Step 2: Create `infra/refresh/crontab`** (BusyBox format; must end with a newline; times are UTC)
 
 ```
 # Cheap match sync + aggregates + parse requests: every 6 hours.
@@ -582,7 +582,7 @@ CMD ["/entrypoint.sh"]
 40 3 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts fetch-hero-builds > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts fetch-player-builds > /proc/1/fd/1 2>&1
 ```
 
-- [ ] **Step 3: Create `infra/refresh/entrypoint.sh`**
+- [x] **Step 3: Create `infra/refresh/entrypoint.sh`**
 
 ```sh
 #!/bin/sh
@@ -595,7 +595,7 @@ cd /app
 exec crond -f -l 2
 ```
 
-- [ ] **Step 4: Add the service to `docker-compose.yml`**
+- [x] **Step 4: Add the service to `docker-compose.yml`**
 
 Add after the `api` service (same indentation level):
 
@@ -612,22 +612,22 @@ Add after the `api` service (same indentation level):
     restart: unless-stopped
 ```
 
-- [ ] **Step 5: Build and start it**
+- [x] **Step 5: Build and start it**
 
 Run: `sg docker -c 'docker compose up -d --build refresh'`
 Expected: image builds without error, container starts.
 
-- [ ] **Step 6: Verify the initial run in the logs**
+- [x] **Step 6: Verify the initial run in the logs**
 
 Run: `sg docker -c 'docker compose logs refresh'` (wait ~60 s for the fetch to finish; each player fetch sleeps 1.1 s)
 Expected: log lines ending in `[run-job] fetch-data ok: ...` and `[run-job] populate-builds ok: ...`, then silence (crond in foreground).
 
-- [ ] **Step 7: Verify rows landed via the container's DB path**
+- [x] **Step 7: Verify rows landed via the container's DB path**
 
 Run: `sg docker -c 'docker compose exec db psql -U friendtracker -c "SELECT job, ok, finished_at FROM refresh_runs ORDER BY id DESC LIMIT 3"'`
 Expected: fresh `fetch-data` and `populate-builds` rows with `ok = t` and `finished_at` within the last few minutes.
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add infra/ docker-compose.yml
@@ -645,7 +645,7 @@ git commit -m "infra: scheduled refresh container (crond: 6h match sync, daily b
 - Modify: `CLAUDE.md` (project)
 - Modify (outside repo): `/srv/dakis/apps/dota2tracker/compose.yml`
 
-- [ ] **Step 1: Update `DEPLOY.md`**
+- [x] **Step 1: Update `DEPLOY.md`**
 
 In the "Data pipeline" section, add at the top of the section:
 
@@ -656,7 +656,7 @@ run to the `refresh_runs` table. The manual commands below still work for one-of
 runs and initial seeding.
 ```
 
-- [ ] **Step 2: Update project `CLAUDE.md`**
+- [x] **Step 2: Update project `CLAUDE.md`**
 
 In the "Data" commands section, add:
 
