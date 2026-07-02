@@ -81,3 +81,13 @@ export const playerMatches = pgTable(
     index('player_matches_hero_idx').on(t.heroId),
   ]
 )
+
+/** One row per pipeline job run — written by scripts/run-job.ts */
+export const refreshRuns = pgTable('refresh_runs', {
+  id: serial('id').primaryKey(),
+  job: text('job').notNull(),
+  startedAt: timestamp('started_at', { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }),
+  ok: boolean('ok'),
+  detail: jsonb('detail').$type<{ summary?: string; error?: string }>(),
+})

@@ -7,7 +7,7 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is required')
 }
 
-const pool = new pg.Pool({ connectionString })
+export const pool = new pg.Pool({ connectionString })
 export const db = drizzle(pool, { schema })
 export * from './schema.js'
 export { and, eq, isNull } from 'drizzle-orm'

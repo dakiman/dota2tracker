@@ -29,6 +29,13 @@
       "when": 1781049700000,
       "tag": "0003_drop_hero_stats",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1782998400000,
+      "tag": "0004_refresh_runs",
+      "breakpoints": true
     }
   ]
 }
