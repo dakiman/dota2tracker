@@ -32,6 +32,17 @@ services:
       db:
         condition: service_healthy
 
+  refresh:
+    build:
+      context: .
+      dockerfile: infra/refresh/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://friendtracker:${DB_PASSWORD:-devpassword}@db:5432/friendtracker
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   web:
     build:
       context: .

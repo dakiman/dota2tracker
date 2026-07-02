@@ -1,0 +1,5 @@
+# Cheap match sync + aggregates + parse requests: every 6 hours.
+# ~10 OpenDota calls + up to 10 parse requests per run.
+20 */6 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts fetch-data > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts populate-builds > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts request-parses > /proc/1/fd/1 2>&1
+# Slow build fetchers: daily, off-peak. ~300-500 OpenDota calls.
+40 3 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts fetch-hero-builds > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts fetch-player-builds > /proc/1/fd/1 2>&1
