@@ -8,6 +8,7 @@ const DEFAULT_SITE_NAME = 'FriendTracker'
 export const useConfigStore = defineStore('config', () => {
   const siteName = ref(DEFAULT_SITE_NAME)
   const players = ref<Player[]>([])
+  const lastRefreshed = ref<string | null>(null)
   let loadPromise: Promise<void> | null = null
 
   async function load() {
@@ -17,6 +18,7 @@ export const useConfigStore = defineStore('config', () => {
         const cfg = await useApi<AppConfig>('/api/config')
         siteName.value = cfg.siteName || DEFAULT_SITE_NAME
         players.value = cfg.players
+        lastRefreshed.value = cfg.lastRefreshed
         document.title = `${siteName.value} – DOTA 2 Stats`
       } catch {
         // keep defaults; index.html already carries the fallback title
@@ -26,5 +28,5 @@ export const useConfigStore = defineStore('config', () => {
     return loadPromise
   }
 
-  return { siteName, players, load }
+  return { siteName, players, lastRefreshed, load }
 })

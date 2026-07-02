@@ -14,6 +14,8 @@ export interface Player {
 export interface AppConfig {
   players: Player[]
   siteName: string
+  /** ISO timestamp of the last successful fetch-data run, null if never */
+  lastRefreshed: string | null
 }
 
 /** Meta page: per-player-per-hero (or aggregated when multiple players selected) */
