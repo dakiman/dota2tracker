@@ -1,21 +1,7 @@
-import { Hono } from 'hono'
-import { cors } from 'hono/cors'
 import { serve } from '@hono/node-server'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { db } from './db/index.js'
-import config from './routes/config.js'
-import meta from './routes/meta.js'
-import heroes from './routes/heroes.js'
-
-const app = new Hono()
-
-app.use(cors())
-
-app.route('/api/config', config)
-app.route('/api/meta', meta)
-app.route('/api/heroes', heroes)
-
-app.get('/api/health', (c) => c.json({ ok: true }))
+import { app } from './app.js'
 
 try {
   console.log('Running DB migrations...')
@@ -30,5 +16,3 @@ const port = Number(process.env.PORT) || 3000
 serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`)
 })
-
-export default app
