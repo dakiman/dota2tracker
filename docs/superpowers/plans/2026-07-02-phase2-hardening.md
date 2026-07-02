@@ -29,11 +29,11 @@
 **Interfaces:**
 - Produces: named export `app` (a `Hono` instance) from `apps/api/src/app.js` — Task 4's route tests call `app.request(...)` on it; named export `pool` (`pg.Pool`) from `apps/api/src/db/index.js` — used by Task 4 teardown and Task 6 shutdown. Behavior of the running server is unchanged.
 
-- [ ] **Step 1: Ensure the pool is exported**
+- [x] **Step 1: Ensure the pool is exported**
 
 In `apps/api/src/db/index.ts`, if line 10 is `const pool = new pg.Pool(...)`, change it to `export const pool = new pg.Pool(...)`. (The Phase 1 plan makes the same change — skip if already exported.)
 
-- [ ] **Step 2: Create `apps/api/src/app.ts`**
+- [x] **Step 2: Create `apps/api/src/app.ts`**
 
 ```ts
 import { Hono } from 'hono'
@@ -55,7 +55,7 @@ app.get('/api/health', (c) => c.json({ ok: true }))
 
 (CORS is carried over verbatim here; removing it is Task 5, gated by a test.)
 
-- [ ] **Step 3: Reduce `apps/api/src/index.ts` to bootstrap**
+- [x] **Step 3: Reduce `apps/api/src/index.ts` to bootstrap**
 
 Replace the whole file with:
 
@@ -82,12 +82,12 @@ serve({ fetch: app.fetch, port }, (info) => {
 
 (The old `export default app` is dropped — nothing imported it; `app` now lives in `app.ts`.)
 
-- [ ] **Step 4: Type-check**
+- [x] **Step 4: Type-check**
 
 Run: `pnpm --filter api lint`
 Expected: exits 0.
 
-- [ ] **Step 5: Verify the server still boots and serves**
+- [x] **Step 5: Verify the server still boots and serves**
 
 Run: `sg docker -c 'docker compose up -d db'` then `pnpm dev:api &`, wait for "API listening", then:
 
@@ -97,7 +97,7 @@ curl -s http://localhost:3000/api/health
 
 Expected: `{"ok":true}`. Kill the dev server afterwards.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/
@@ -121,7 +121,7 @@ git commit -m "api: split app construction (app.ts) from bootstrap (index.ts)"
   - Both modules are **side-effect-free on import** (no dotenv, no DB, no network) — that is the point of the extraction; Task 3's unit tests import them directly.
 - Non-goals: `aggregateSkillBuild` and `aggregateStats` stay in `fetch-player-builds.ts` (they depend on the module-level OpenDota constants maps; extracting them is future work, noted in ROADMAP Phase 4 territory).
 
-- [ ] **Step 1: Create `scripts/lib/duration-stats.ts`**
+- [x] **Step 1: Create `scripts/lib/duration-stats.ts`**
 
 Move (verbatim, plus exports) the `DurationBucket` interface and `buildDurationStats` function from `scripts/fetch-hero-builds.ts`:
 
@@ -158,7 +158,7 @@ export function buildDurationStats(buckets: DurationBucket[]): MatchDurationWinR
 }
 ```
 
-- [ ] **Step 2: Point `scripts/fetch-hero-builds.ts` at the lib**
+- [x] **Step 2: Point `scripts/fetch-hero-builds.ts` at the lib**
 
 Delete the local `DurationBucket` interface and `buildDurationStats` function (the `// --- Duration stats ---` section). Add to the imports at the top:
 
@@ -168,7 +168,7 @@ import { buildDurationStats, type DurationBucket } from './lib/duration-stats.js
 
 Remove `MatchDurationWinRate` from the `@friendtracker/shared` type import if it is now unused.
 
-- [ ] **Step 3: Create `scripts/lib/player-aggregates.ts`**
+- [x] **Step 3: Create `scripts/lib/player-aggregates.ts`**
 
 Move the following from `scripts/fetch-player-builds.ts`: the `PurchaseLogEntry` and `ParsedMatch` interfaces, the `EXCLUDED_FROM_CORE` set, and `aggregateItemBuild` — with **one signature change**: `aggregateItemBuild` takes `itemIdMap` as a second parameter instead of reading the module-level variable.
 
@@ -346,7 +346,7 @@ export function aggregateItemBuild(
 }
 ```
 
-- [ ] **Step 4: Point `scripts/fetch-player-builds.ts` at the lib**
+- [x] **Step 4: Point `scripts/fetch-player-builds.ts` at the lib**
 
 Delete from `fetch-player-builds.ts`: the `PurchaseLogEntry` interface, the `ParsedMatch` interface, the `EXCLUDED_FROM_CORE` set, and the whole `aggregateItemBuild` function. Add to the imports at the top:
 
@@ -372,12 +372,12 @@ to:
 
 (`itemIdMap` is the module-level map populated by `loadConstants()`; it stays where it is. `aggregateSkillBuild` and `aggregateStats` also stay.)
 
-- [ ] **Step 5: Type-check**
+- [x] **Step 5: Type-check**
 
 Run: `pnpm lint`
 Expected: exits 0. (Common failures: `MatchDurationWinRate`/`ItemGroup`/`SituationalItem` left in an import list where no longer used — remove unused names; or `ParsedMatch` still referenced by `extractPlayerMatch`/`aggregateSkillBuild`/`aggregateStats` — those now use the imported type, which is why the import above is not type-only for the functions.)
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add scripts/
@@ -400,7 +400,7 @@ git commit -m "scripts: extract pure aggregators to lib/ (side-effect-free impor
 - Produces: `pnpm test` command. The vitest config's `globalSetup` entry is added in Task 4 — in this task the config has no globalSetup, so unit tests run without a database.
 - Note: these are **characterization tests** of existing behavior — they should pass on first run. A failure means the Task 2 extraction changed behavior; fix the extraction, not the test.
 
-- [ ] **Step 1: Install vitest and add the test script**
+- [x] **Step 1: Install vitest and add the test script**
 
 Run: `pnpm add -Dw vitest`
 
@@ -412,7 +412,7 @@ In root `package.json` scripts, add:
 
 (The shared build is required because tests import `@friendtracker/shared`, which resolves to its `dist/`.)
 
-- [ ] **Step 2: Create root `vitest.config.ts`**
+- [x] **Step 2: Create root `vitest.config.ts`**
 
 ```ts
 import { defineConfig } from 'vitest/config'
@@ -430,7 +430,7 @@ export default defineConfig({
 })
 ```
 
-- [ ] **Step 3: Write `tests/derive-role.test.ts`**
+- [x] **Step 3: Write `tests/derive-role.test.ts`**
 
 Hero IDs come from `HERO_ROLE_MAP` in `packages/shared/src/constants.ts`: `1` = Anti-Mage (`carry`), `5` = Crystal Maiden (`support`).
 
@@ -468,7 +468,7 @@ describe('deriveRole', () => {
 })
 ```
 
-- [ ] **Step 4: Write `tests/duration-stats.test.ts`**
+- [x] **Step 4: Write `tests/duration-stats.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest'
@@ -495,7 +495,7 @@ describe('buildDurationStats', () => {
 })
 ```
 
-- [ ] **Step 5: Write `tests/aggregate-item-build.test.ts`**
+- [x] **Step 5: Write `tests/aggregate-item-build.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest'
@@ -567,12 +567,12 @@ describe('aggregateItemBuild', () => {
 })
 ```
 
-- [ ] **Step 6: Run the suite**
+- [x] **Step 6: Run the suite**
 
 Run: `pnpm test`
 Expected: all 3 files pass (12 tests). No database needed yet.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add package.json pnpm-lock.yaml vitest.config.ts tests/
@@ -592,7 +592,7 @@ git commit -m "test: vitest + unit tests for deriveRole, buildDurationStats, agg
 - Consumes: `app` from Task 1 (`apps/api/src/app.js`), `pool` from `apps/api/src/db/index.js`, migrations in `apps/api/src/db/migrations/`.
 - Produces: a seeded `friendtracker_test` database (players `111`/Alice + `222`/Bob; heroes `1`/antimage + `2`/axe; three `player_matches` rows), recreated from scratch on every `pnpm test` run. Task 5's CORS test lives in the same file's describe pattern.
 
-- [ ] **Step 1: Create `tests/global-setup.ts`**
+- [x] **Step 1: Create `tests/global-setup.ts`**
 
 ```ts
 /**
@@ -633,7 +633,7 @@ export default async function setup() {
 }
 ```
 
-- [ ] **Step 2: Register it in `vitest.config.ts`**
+- [x] **Step 2: Register it in `vitest.config.ts`**
 
 Add inside the `test` object:
 
@@ -641,7 +641,7 @@ Add inside the `test` object:
     globalSetup: ['tests/global-setup.ts'],
 ```
 
-- [ ] **Step 3: Write `tests/api-routes.test.ts`**
+- [x] **Step 3: Write `tests/api-routes.test.ts`**
 
 ```ts
 import { describe, it, expect, afterAll } from 'vitest'
@@ -741,12 +741,12 @@ describe('GET /api/heroes/:heroSlug', () => {
 
 Note: if the Phase 1 plan has landed, `/api/config` also returns `lastRefreshed: null` here (no refresh_runs rows in the test DB) — the assertions above don't touch it, so both orderings pass.
 
-- [ ] **Step 4: Run the suite**
+- [x] **Step 4: Run the suite**
 
 Run: `sg docker -c 'docker compose up -d db'` then `pnpm test`
 Expected: all 4 test files pass. If `DROP DATABASE ... WITH (FORCE)` errors, the local Postgres predates v13 — it doesn't (compose pins postgres:16-alpine), so treat that error as a wrong-database-URL signal instead.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add vitest.config.ts tests/
@@ -765,7 +765,7 @@ git commit -m "test: route tests via app.request against throwaway friendtracker
 - Consumes: `app` from Task 1; suite from Tasks 3–4.
 - Produces: an API that emits no CORS headers. Prod is same-origin (nginx proxies `/api/` — `apps/web/nginx.conf:28`), dev is same-origin (Vite proxies `/api` — `apps/web/vite.config.ts:14`), so nothing legitimate breaks.
 
-- [ ] **Step 1: Write the failing test — `tests/cors.test.ts`**
+- [x] **Step 1: Write the failing test — `tests/cors.test.ts`**
 
 ```ts
 import { describe, it, expect } from 'vitest'
@@ -781,12 +781,12 @@ describe('CORS', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm test`
 Expected: `tests/cors.test.ts` FAILS with `expected '*' to be null` (the `cors()` middleware reflects every origin). All other files still pass.
 
-- [ ] **Step 3: Remove the middleware**
+- [x] **Step 3: Remove the middleware**
 
 In `apps/api/src/app.ts`, delete both lines:
 
@@ -798,16 +798,16 @@ import { cors } from 'hono/cors'
 app.use(cors())
 ```
 
-- [ ] **Step 4: Run tests to verify green**
+- [x] **Step 4: Run tests to verify green**
 
 Run: `pnpm test`
 Expected: all files pass, including `cors.test.ts`.
 
-- [ ] **Step 5: Verify the dev proxy path still works end-to-end**
+- [x] **Step 5: Verify the dev proxy path still works end-to-end**
 
 Run `pnpm dev:api` and `pnpm dev:web`, open `http://localhost:5173` — meta page loads data (requests go through the Vite proxy, same-origin). Stop both.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/app.ts tests/cors.test.ts
@@ -825,7 +825,7 @@ git commit -m "api: drop wide-open CORS; API is same-origin behind nginx/Vite pr
 - Consumes: `pool` export from Task 1.
 - Produces: SIGTERM/SIGINT → close server, drain pool, exit 0 — so `docker stop` doesn't sit through the 10 s kill timeout and in-flight requests finish.
 
-- [ ] **Step 1: Add shutdown handling to `apps/api/src/index.ts`**
+- [x] **Step 1: Add shutdown handling to `apps/api/src/index.ts`**
 
 Replace the whole file with:
 
@@ -864,17 +864,17 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('SIGINT', () => shutdown('SIGINT'))
 ```
 
-- [ ] **Step 2: Type-check**
+- [x] **Step 2: Type-check**
 
 Run: `pnpm --filter api lint`
 Expected: exits 0.
 
-- [ ] **Step 3: Verify the signal path in docker**
+- [x] **Step 3: Verify the signal path in docker**
 
 Run: `sg docker -c 'docker compose up -d --build api'` then `time sg docker -c 'docker compose stop api'`
 Expected: `docker compose logs api` ends with `SIGTERM received, shutting down...`, and the `stop` completes in ~1 s (well under the 10 s SIGKILL timeout).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/api/src/index.ts
@@ -892,7 +892,7 @@ git commit -m "api: graceful shutdown — close server and drain pg pool on SIGT
 **Interfaces:**
 - Produces: `hero_builds.last_updated` and `player_matches.start_time` become `timestamptz`. No API/type change — node-postgres returns JS `Date` for both types and all writers store UTC-derived `Date`s.
 
-- [ ] **Step 1: Update the schema**
+- [x] **Step 1: Update the schema**
 
 In `apps/api/src/db/schema.ts`:
 
@@ -908,12 +908,12 @@ In `apps/api/src/db/schema.ts`:
     startTime: timestamp('start_time', { withTimezone: true }).notNull(),
 ```
 
-- [ ] **Step 2: Generate the migration**
+- [x] **Step 2: Generate the migration**
 
 Run: `pnpm --filter api db:generate --name timestamptz`
 Expected: a new `apps/api/src/db/migrations/000N_timestamptz.sql` containing two `ALTER TABLE ... SET DATA TYPE timestamp with time zone` statements and nothing else.
 
-- [ ] **Step 3: Make the conversion timezone-explicit**
+- [x] **Step 3: Make the conversion timezone-explicit**
 
 Edit the generated SQL: append a `USING` clause to each `ALTER` so the reinterpretation doesn't depend on the migrating session's timezone (drizzle omits it; the stored values were written from UTC processes):
 
@@ -924,18 +924,18 @@ ALTER TABLE "player_matches" ALTER COLUMN "start_time" SET DATA TYPE timestamp w
 
 (Keep drizzle's `--> statement-breakpoint` separators exactly as generated.)
 
-- [ ] **Step 4: Apply and verify locally**
+- [x] **Step 4: Apply and verify locally**
 
 Run: `pnpm --filter api db:migrate`
 Then: `sg docker -c 'docker compose exec db psql -U friendtracker -c "\\d player_matches"'`
 Expected: `start_time | timestamp with time zone | not null`.
 
-- [ ] **Step 5: Run the full suite**
+- [x] **Step 5: Run the full suite**
 
 Run: `pnpm lint && pnpm test`
 Expected: both pass (global-setup re-runs all migrations, including this one, on the throwaway DB).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/db/
