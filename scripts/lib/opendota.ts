@@ -7,9 +7,9 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-export async function fetchJson<T>(url: string): Promise<T> {
+export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   for (let attempt = 0; attempt < 5; attempt++) {
-    const res = await fetch(url)
+    const res = await fetch(url, init)
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get('retry-after')) || 60
       console.log(`    Rate limited, sleeping ${retryAfter}s before retry...`)
