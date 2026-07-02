@@ -14,6 +14,7 @@ const JOBS: Record<string, () => Promise<JobModule>> = {
   'populate-builds': () => import('./populate-builds.js'),
   'fetch-hero-builds': () => import('./fetch-hero-builds.js'),
   'fetch-player-builds': () => import('./fetch-player-builds.js'),
+  'request-parses': () => import('./request-parses.js'),
 }
 
 async function main() {
