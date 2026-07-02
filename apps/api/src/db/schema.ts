@@ -38,7 +38,7 @@ export const heroBuilds = pgTable(
     winRate: real('win_rate').notNull().default(0),
     buildData: jsonb('build_data').$type<BuildData>().notNull(),
     statsData: jsonb('stats_data').$type<StatsData>(),
-    lastUpdated: timestamp('last_updated').defaultNow(),
+    lastUpdated: timestamp('last_updated', { withTimezone: true }).defaultNow(),
   },
   (t) => [
     uniqueIndex('hero_role_global_idx').on(t.heroSlug, t.role).where(sql`${t.playerId} IS NULL`),
@@ -71,7 +71,7 @@ export const playerMatches = pgTable(
     deaths: integer('deaths').notNull().default(0),
     assists: integer('assists').notNull().default(0),
     duration: integer('duration').notNull(),
-    startTime: timestamp('start_time').notNull(),
+    startTime: timestamp('start_time', { withTimezone: true }).notNull(),
     laneRole: smallint('lane_role'),
     isRoaming: boolean('is_roaming'),
     role: text('role').$type<Role>().notNull(),
