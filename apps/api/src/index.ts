@@ -1,6 +1,6 @@
 import { serve } from '@hono/node-server'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { db } from './db/index.js'
+import { db, pool } from './db/index.js'
 import { app } from './app.js'
 
 try {
@@ -13,6 +13,20 @@ try {
 }
 
 const port = Number(process.env.PORT) || 3000
-serve({ fetch: app.fetch, port }, (info) => {
+const server = serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`)
 })
+
+let shuttingDown = false
+function shutdown(signal: string) {
+  if (shuttingDown) return
+  shuttingDown = true
+  console.log(`${signal} received, shutting down...`)
+  server.close((err) => {
+    void pool.end().finally(() => process.exit(err ? 1 : 0))
+  })
+  // In-flight keep-alive connections can hold close() open — don't wait forever.
+  setTimeout(() => process.exit(1), 10_000).unref()
+}
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.on('SIGINT', () => shutdown('SIGINT'))
