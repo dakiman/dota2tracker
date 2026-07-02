@@ -119,6 +119,16 @@ export interface BuildData {
   itemBuild: ItemBuild
 }
 
+/** One selectable build (skills + items + detailed stats) for a single role. */
+export interface RoleBuild {
+  role: Role
+  /** Player the build belongs to; null = global/curated build */
+  playerId: string | null
+  skillBuilds: SkillBuild[]
+  itemBuild: ItemBuild
+  stats?: StatsData
+}
+
 /** Hero detail page payload */
 export interface HeroBuild {
   heroId: number
@@ -126,15 +136,13 @@ export interface HeroBuild {
   heroSlug: string
   totalMatches: number
   winRate: number
+  /** Exact win count (avoids client-side rounding of totalMatches * winRate) */
+  wins: number
   kills?: number
   deaths?: number
   assists?: number
+  /** Per-role match summaries (from player_matches); drive the role tabs */
   roleTabs: RoleTabStat[]
-  /** Role the displayed build content belongs to (null when no build row) */
-  buildRole?: Role | null
-  /** Player the displayed build belongs to; null = global/curated build */
-  buildPlayerId?: string | null
-  skillBuilds: SkillBuild[]
-  itemBuild: ItemBuild
-  stats?: StatsData
+  /** Build content per role that has any; role tabs switch between these */
+  builds: RoleBuild[]
 }

@@ -5,8 +5,8 @@
  * Run: pnpm populate-builds (from repo root). Requires DATABASE_URL.
  */
 import 'dotenv/config'
-import { db, playerMatches, heroes, heroBuilds, and, eq, isNull } from '../apps/api/src/db/index.js'
-import { sql } from 'drizzle-orm'
+import { db, playerMatches, heroes, heroBuilds, eq, isNull } from '../apps/api/src/db/index.js'
+import { inArray, sql } from 'drizzle-orm'
 import type { BuildData, Role } from '@friendtracker/shared'
 
 const emptyBuildData: BuildData = {
@@ -36,52 +36,72 @@ async function main() {
 
   console.log(`Found ${rows.length} hero+role combinations in player_matches.`)
 
-  let inserted = 0
-  let updated = 0
-
-  for (const row of rows) {
-    const winRate = row.totalMatches > 0 ? (row.wins / row.totalMatches) * 100 : 0
-
-    const existing = await db
-      .select({ id: heroBuilds.id })
-      .from(heroBuilds)
-      .where(
-        and(
-          eq(heroBuilds.heroSlug, row.heroSlug),
-          eq(heroBuilds.role, row.role as Role),
-          isNull(heroBuilds.playerId)
-        )
-      )
-      .limit(1)
-
-    if (existing.length > 0) {
+  // Single batched upsert against the hero_role_global_idx partial unique index
+  // (player_id IS NULL). Only the count columns are refreshed, so curated
+  // buildData (e.g. the Abaddon build) on an existing row is preserved.
+  if (rows.length > 0) {
+    const values = rows.map((row) => ({
+      heroId: row.heroId,
+      heroSlug: row.heroSlug,
+      heroName: row.heroName,
+      role: row.role as Role,
+      playerId: null,
+      totalMatches: row.totalMatches,
+      winRate: row.totalMatches > 0 ? (row.wins / row.totalMatches) * 100 : 0,
+      buildData: emptyBuildData,
+    }))
+    const CHUNK = 500
+    for (let i = 0; i < values.length; i += CHUNK) {
       await db
-        .update(heroBuilds)
-        .set({ totalMatches: row.totalMatches, winRate, lastUpdated: new Date() })
-        .where(
-          and(
-            eq(heroBuilds.heroSlug, row.heroSlug),
-            eq(heroBuilds.role, row.role as Role),
-            isNull(heroBuilds.playerId)
-          )
-        )
-      updated++
-    } else {
-      await db.insert(heroBuilds).values({
-        heroId: row.heroId,
-        heroSlug: row.heroSlug,
-        heroName: row.heroName,
-        role: row.role as Role,
-        playerId: null,
-        totalMatches: row.totalMatches,
-        winRate,
-        buildData: emptyBuildData,
-      })
-      inserted++
+        .insert(heroBuilds)
+        .values(values.slice(i, i + CHUNK))
+        .onConflictDoUpdate({
+          target: [heroBuilds.heroSlug, heroBuilds.role],
+          targetWhere: sql`${heroBuilds.playerId} IS NULL`,
+          set: {
+            totalMatches: sql`excluded.total_matches`,
+            winRate: sql`excluded.win_rate`,
+            heroName: sql`excluded.hero_name`,
+            lastUpdated: sql`now()`,
+          },
+        })
     }
   }
 
-  console.log(`populate-builds done: ${inserted} inserted, ${updated} updated.`)
+  // Prune stale global aggregate rows: (heroSlug, role) combos that no longer
+  // appear in player_matches (e.g. after role-derivation changes). Only empty
+  // rows are deleted, so curated builds with real content are never removed.
+  const current = new Set(rows.map((r) => `${r.heroSlug}::${r.role}`))
+  const globalRows = await db
+    .select({
+      id: heroBuilds.id,
+      heroSlug: heroBuilds.heroSlug,
+      role: heroBuilds.role,
+      buildData: heroBuilds.buildData,
+    })
+    .from(heroBuilds)
+    .where(isNull(heroBuilds.playerId))
+  const stale = globalRows.filter((r) => {
+    if (current.has(`${r.heroSlug}::${r.role}`)) return false
+    const bd = r.buildData as BuildData | null
+    const hasContent =
+      (bd?.skillBuilds?.length ?? 0) > 0 ||
+      (bd?.itemBuild?.startingItems?.length ?? 0) > 0 ||
+      (bd?.itemBuild?.coreItems?.length ?? 0) > 0
+    return !hasContent
+  })
+  if (stale.length > 0) {
+    await db.delete(heroBuilds).where(
+      inArray(
+        heroBuilds.id,
+        stale.map((r) => r.id)
+      )
+    )
+  }
+
+  console.log(
+    `populate-builds done: ${rows.length} rows upserted, ${stale.length} stale rows pruned.`
+  )
 }
 
 main().catch((e) => {

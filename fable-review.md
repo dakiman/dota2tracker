@@ -133,9 +133,13 @@ Things that are fine today but will bite the planned transformation:
 
 **Done** (quick-win pass, `main` @ 2026-07-02): §1.1, §1.2, §1.3, §1.4, §1.5, plus the role-tabs-from-`player_matches` and build-labeling parts of §2, the `pickRate` drop from §3, the dead-code cleanup in §5 (siteName wired up, pickRate/playerId deleted), and all of §6 (.dockerignore, gzip, `--filter api...`).
 
-**Still open** (deferred, not part of quick-win pass):
-- §2 — make role tabs actually *switch* the displayed build; return exact `wins` instead of rounding on the client.
+**Done** (second pass, `main` @ 2026-07-02) — §2, §4, §5:
+- §2 — role tabs are now clickable and switch the displayed build (payload returns `builds[]` per role; a ● marks roles that have a build; empty-state shown for roles without one). API returns exact `wins`; client no longer rounds `totalMatches * winRate`.
+- §4 — `fetch-data` hero sync and `populate-builds` are single batched upserts (no more N+1); `populate-builds` prunes stale empty global rows while preserving curated builds; `fetch-player-builds` keys builds by the player's actual dominant role (`mode()`), not static `getHeroRole`; added `pnpm refresh` chaining the pipeline in order. Talent L/R ordering left as-is with a documented assumption in `fetch-player-builds.ts` — still needs a one-hero manual spot-check against the in-game tree (no ground truth to verify from code).
+- §5 — deleted the unused `@shared/*` path alias; `SkillBuildCard` no longer claims "Highest Win Rate" (only one build is ever produced, so the title is a single honest "Most Popular").
+- Verified: `pnpm lint` (+ scripts `tsc`) passes; batched upsert / prune / `mode()` / new route payload exercised against a throwaway Postgres (curated Abaddon build preserved through both upsert and prune; exact wins, per-role builds, and the §1.3 no-build-row fallback all confirmed).
+
+**Still open** (deferred):
 - §3 — CORS lockdown, `limit(500)` comment, 404-vs-500 client handling, remove dead JSON.parse dance (partly gone from `heroes.ts`), graceful shutdown, `timestamptz`.
-- §4 — script N+1 batching, `populate-builds` pruning, per-match role for player builds, talent L/R spot-check, `pnpm refresh` chain.
-- §5 — `@shared/*` unused path alias, `SkillBuildCard` "Highest Win Rate" title lie.
+- §4 — talent L/R in-game spot-check (see above).
 - §7, §8, §9 — frontend a11y polish, tests, accounts/leagues forward-looking work.

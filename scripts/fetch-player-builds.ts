@@ -9,8 +9,8 @@
 import 'dotenv/config'
 import { db, playerMatches, heroes, heroBuilds, players, and, eq } from '../apps/api/src/db/index.js'
 import { sql } from 'drizzle-orm'
-import { getHeroRole } from '@friendtracker/shared'
 import type {
+  Role,
   BuildData,
   StatsData,
   SkillBuild,
@@ -350,6 +350,10 @@ function aggregateSkillBuild(matches: ParsedMatch[], heroSlug: string): SkillBui
     for (const [level, names] of byLevel) {
       const tier = tierMap[level]
       if (tier && names.length >= 2) {
+        // ASSUMPTION (unverified): OpenDota's hero_abilities `talents` array lists
+        // each tier as [left, right] matching the in-game tree. If a hero's tree
+        // ever renders mirrored, this ordering is the culprit — spot-check one
+        // hero against the client before trusting talent "picked" highlighting.
         talentTiers.set(tier, [names[0], names[1]])
       }
     }
@@ -503,6 +507,9 @@ async function main() {
         heroName: heroes.name,
         heroSlug: heroes.slug,
         matches: sql<number>`COUNT(*)::int`,
+        // Role the player actually played most on this hero, not a static
+        // hero-wide default — otherwise a mid Abaddon lands under "support".
+        role: sql<Role>`mode() WITHIN GROUP (ORDER BY ${playerMatches.role})`,
       })
       .from(playerMatches)
       .innerJoin(heroes, eq(playerMatches.heroId, heroes.id))
@@ -558,7 +565,7 @@ async function main() {
       const statsData = aggregateStats(parsedMatches)
 
       const buildData: BuildData = { skillBuilds, itemBuild }
-      const role = getHeroRole(hero.heroId)
+      const role = hero.role
       const wins = parsedMatches.filter((m) => m.won).length
       const winRate = Math.round((wins / parsedMatches.length) * 1000) / 10
 

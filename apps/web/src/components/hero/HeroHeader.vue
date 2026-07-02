@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { heroCropUrl } from '@friendtracker/shared'
-import type { HeroBuild } from '@friendtracker/shared'
+import type { HeroBuild, Role } from '@friendtracker/shared'
 
-defineProps<{ hero: HeroBuild }>()
+defineProps<{ hero: HeroBuild; activeRole: Role | null; buildRoles: Role[] }>()
+defineEmits<{ (e: 'select-role', role: Role): void }>()
 </script>
 
 <template>
@@ -43,18 +44,29 @@ defineProps<{ hero: HeroBuild }>()
           </span>
         </div>
         <div class="flex flex-wrap gap-2 mt-2">
-          <span
+          <button
             v-for="tab in hero.roleTabs"
             :key="tab.role"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium capitalize"
-            style="background-color: var(--color-dota-bg-light); border: 1px solid var(--color-dota-border);"
+            type="button"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium capitalize cursor-pointer transition-colors"
+            style="background-color: var(--color-dota-bg-light);"
+            :style="{
+              border: `1px solid ${tab.role === activeRole ? 'var(--color-dota-gold)' : 'var(--color-dota-border)'}`,
+            }"
+            @click="$emit('select-role', tab.role)"
           >
-            <span class="text-dota-text">{{ tab.role.replace('_', ' ') }}</span>
+            <span :class="tab.role === activeRole ? 'text-dota-gold' : 'text-dota-text'">{{ tab.role.replace('_', ' ') }}</span>
             <span class="font-mono" :class="tab.winRate >= 50 ? 'text-dota-green' : 'text-dota-red'">
               {{ tab.winRate.toFixed(1) }}%
             </span>
             <span class="text-dota-text-dim">{{ tab.matches }} games</span>
-          </span>
+            <span
+              v-if="buildRoles.includes(tab.role)"
+              class="w-1.5 h-1.5 rounded-full"
+              style="background-color: var(--color-dota-gold);"
+              title="Build available"
+            />
+          </button>
         </div>
       </div>
     </div>

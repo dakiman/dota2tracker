@@ -4,7 +4,7 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { usePlayerFilterStore } from '@/stores/playerFilter'
 import { useConfigStore } from '@/stores/config'
-import type { HeroBuild } from '@friendtracker/shared'
+import type { HeroBuild, Role } from '@friendtracker/shared'
 import HeroHeader from '@/components/hero/HeroHeader.vue'
 import SkillBuildCard from '@/components/hero/SkillBuildCard.vue'
 import TalentTree from '@/components/hero/TalentTree.vue'
@@ -23,24 +23,27 @@ const hero = ref<HeroBuild | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const activeTab = ref<'builds' | 'stats'>('builds')
+const activeRole = ref<Role | null>(null)
 
 const heroSlug = computed(() => route.params.heroSlug as string)
 
-const hasBuildData = computed(() => {
-  if (!hero.value) return false
-  return hero.value.skillBuilds.length > 0
-    || hero.value.itemBuild.startingItems.length > 0
-    || hero.value.itemBuild.coreItems.length > 0
-})
+const buildRoles = computed<Role[]>(() => hero.value?.builds.map((b) => b.role) ?? [])
+const hasAnyBuild = computed(() => (hero.value?.builds.length ?? 0) > 0)
+
+const activeBuild = computed(
+  () => hero.value?.builds.find((b) => b.role === activeRole.value) ?? null
+)
 
 const buildLabel = computed(() => {
-  if (!hero.value?.buildRole) return null
-  const pid = hero.value.buildPlayerId
-  const who = pid
-    ? config.players.find((p) => p.id === pid)?.name ?? 'Player'
+  const b = activeBuild.value
+  if (!b) return null
+  const who = b.playerId
+    ? config.players.find((p) => p.id === b.playerId)?.name ?? 'Player'
     : 'Global'
-  return { role: hero.value.buildRole.replace('_', ' '), who }
+  return { role: b.role.replace('_', ' '), who }
 })
+
+const activeStats = computed(() => activeBuild.value?.stats ?? null)
 
 const hasKda = computed(() => {
   if (!hero.value) return false
@@ -55,6 +58,18 @@ const kda = computed(() => {
   if (d === 0) return `${k + a}`
   return ((k + a) / d).toFixed(2)
 })
+
+// Default to the most-played role that actually has a build, so the build tab
+// opens on something meaningful rather than an empty role.
+function pickDefaultRole(data: HeroBuild): Role | null {
+  const played = data.roleTabs.find((t) => data.builds.some((b) => b.role === t.role))
+  return played?.role ?? data.builds[0]?.role ?? data.roleTabs[0]?.role ?? null
+}
+
+function selectRole(role: Role) {
+  activeRole.value = role
+  if (hero.value?.builds.some((b) => b.role === role)) activeTab.value = 'builds'
+}
 
 let currentLoadId = 0
 
@@ -74,10 +89,8 @@ async function load() {
     )
     if (loadId !== currentLoadId) return
     hero.value = data
-    const hasBuilds = data.skillBuilds.length > 0
-      || data.itemBuild.startingItems.length > 0
-      || data.itemBuild.coreItems.length > 0
-    if (!hasBuilds) activeTab.value = 'stats'
+    activeRole.value = pickDefaultRole(data)
+    activeTab.value = data.builds.length > 0 ? 'builds' : 'stats'
   } catch (e) {
     if (loadId !== currentLoadId) return
     hero.value = null
@@ -100,10 +113,15 @@ watch([heroSlug, () => store.selectedPlayerIds], load)
     >
       ← Back to Heroes
     </RouterLink>
-    <HeroHeader :hero="hero" />
+    <HeroHeader
+      :hero="hero"
+      :active-role="activeRole"
+      :build-roles="buildRoles"
+      @select-role="selectRole"
+    />
 
     <!-- Tab bar -->
-    <div v-if="hasBuildData" class="flex gap-1 border-b pb-0" style="border-color: var(--color-dota-border);">
+    <div v-if="hasAnyBuild" class="flex gap-1 border-b pb-0" style="border-color: var(--color-dota-border);">
       <button
         :class="[
           'px-5 py-2 text-sm font-medium transition-colors border-b-2 -mb-px',
@@ -130,8 +148,15 @@ watch([heroSlug, () => store.selectedPlayerIds], load)
 
     <!-- BUILDS TAB -->
     <template v-if="activeTab === 'builds'">
-      <div v-if="!hasBuildData" class="text-dota-text-dim py-8 text-center">
+      <div v-if="!hasAnyBuild" class="text-dota-text-dim py-8 text-center">
         No build data available for this hero yet.
+      </div>
+      <div v-else-if="!activeBuild" class="text-dota-text-dim py-8 text-center">
+        No build recorded for the
+        <span class="capitalize text-dota-text">{{ activeRole?.replace('_', ' ') }}</span>
+        role yet. Pick a role marked with a
+        <span class="inline-block w-1.5 h-1.5 rounded-full align-middle" style="background-color: var(--color-dota-gold);" />
+        above.
       </div>
       <template v-else>
         <p v-if="buildLabel" class="text-xs text-dota-text-dim capitalize -mt-2">
@@ -143,29 +168,29 @@ watch([heroSlug, () => store.selectedPlayerIds], load)
           <!-- Left column: Items -->
           <div class="space-y-5">
             <!-- Starting Items -->
-            <section v-if="hero.itemBuild.startingItems.length">
+            <section v-if="activeBuild.itemBuild.startingItems.length">
               <h2 class="section-label">Starting Items</h2>
-              <StartingItemsGroup :groups="hero.itemBuild.startingItems" />
+              <StartingItemsGroup :groups="activeBuild.itemBuild.startingItems" />
             </section>
 
             <!-- Core Items -->
-            <section v-if="hero.itemBuild.coreItems.length">
+            <section v-if="activeBuild.itemBuild.coreItems.length">
               <h2 class="section-label">Core Items</h2>
-              <CoreItemTimeline :groups="hero.itemBuild.coreItems" />
+              <CoreItemTimeline :groups="activeBuild.itemBuild.coreItems" />
             </section>
 
             <!-- Situational Items -->
-            <section v-if="hero.itemBuild.situationalItems.length">
+            <section v-if="activeBuild.itemBuild.situationalItems.length">
               <h2 class="section-label">Situational</h2>
-              <ItemStatsList :items="hero.itemBuild.situationalItems" />
+              <ItemStatsList :items="activeBuild.itemBuild.situationalItems" />
             </section>
 
             <!-- Neutral Items -->
-            <section v-if="hero.itemBuild.neutralItems.some(t => t.items.length)">
+            <section v-if="activeBuild.itemBuild.neutralItems.some(t => t.items.length)">
               <h2 class="section-label">Neutral Items</h2>
               <div class="space-y-3">
                 <NeutralItemsTier
-                  v-for="tier in hero.itemBuild.neutralItems.filter(t => t.items.length)"
+                  v-for="tier in activeBuild.itemBuild.neutralItems.filter(t => t.items.length)"
                   :key="tier.tier"
                   :tier-group="tier"
                 />
@@ -173,27 +198,27 @@ watch([heroSlug, () => store.selectedPlayerIds], load)
             </section>
 
             <!-- Late Game -->
-            <section v-if="hero.itemBuild.lateGameInventories.length">
+            <section v-if="activeBuild.itemBuild.lateGameInventories.length">
               <h2 class="section-label">Late Game Inventory</h2>
-              <LateGameInventory :inventories="hero.itemBuild.lateGameInventories" />
+              <LateGameInventory :inventories="activeBuild.itemBuild.lateGameInventories" />
             </section>
           </div>
 
           <!-- Right column: Skills & Talents -->
-          <div class="space-y-5" v-if="hero.skillBuilds.length">
+          <div class="space-y-5" v-if="activeBuild.skillBuilds.length">
             <section>
               <h2 class="section-label">Skill Build</h2>
               <div class="space-y-3">
                 <SkillBuildCard
-                  v-for="(build, i) in hero.skillBuilds"
+                  v-for="(build, i) in activeBuild.skillBuilds"
                   :key="i"
                   :build="build"
-                  :title="i === 0 ? 'Most Popular' : 'Highest Win Rate'"
+                  title="Most Popular"
                 />
               </div>
             </section>
-            <section v-if="hero.skillBuilds[0]?.talents?.length">
-              <TalentTree :talents="hero.skillBuilds[0].talents" />
+            <section v-if="activeBuild.skillBuilds[0]?.talents?.length">
+              <TalentTree :talents="activeBuild.skillBuilds[0].talents" />
             </section>
           </div>
         </div>
@@ -219,14 +244,14 @@ watch([heroSlug, () => store.selectedPlayerIds], load)
         <div class="stat-card">
           <h3 class="text-dota-text-dim text-xs uppercase tracking-wider mb-1">Wins / Losses</h3>
           <p class="font-mono text-2xl text-dota-text">
-            <span class="text-dota-green">{{ Math.round(hero.totalMatches * hero.winRate / 100) }}</span>
+            <span class="text-dota-green">{{ hero.wins }}</span>
             <span class="text-dota-text-dim"> / </span>
-            <span class="text-dota-red">{{ hero.totalMatches - Math.round(hero.totalMatches * hero.winRate / 100) }}</span>
+            <span class="text-dota-red">{{ hero.totalMatches - hero.wins }}</span>
           </p>
         </div>
       </section>
-      <LaneStats v-if="hero.stats?.laneStats?.length" :stats="hero.stats.laneStats" />
-      <PerformanceStats v-if="hero.stats" :stats="hero.stats" />
+      <LaneStats v-if="activeStats?.laneStats?.length" :stats="activeStats.laneStats" />
+      <PerformanceStats v-if="activeStats" :stats="activeStats" />
     </template>
   </div>
   <div v-else-if="error" class="py-16 text-center">

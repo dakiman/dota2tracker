@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { and, desc, eq, inArray, or, sql } from 'drizzle-orm'
 import { db, heroBuilds, heroes as heroesTable, playerMatches } from '../db/index.js'
-import type { BuildData, HeroBuild, Role, RoleTabStat, StatsData } from '@friendtracker/shared'
+import type { BuildData, HeroBuild, Role, RoleBuild, RoleTabStat, StatsData } from '@friendtracker/shared'
 
 const heroes = new Hono()
 
@@ -61,46 +61,38 @@ heroes.get('/:heroSlug', async (c) => {
       return c.json({ error: 'Hero not found' }, 404)
     }
 
-    let payload: HeroBuild
-    if (buildRows.length > 0) {
-      // Prefer the first row that has actual build content (skill builds or items)
-      const first =
-        buildRows.find((r) => {
-          const bd = r.buildData as BuildData
-          return (bd?.skillBuilds?.length ?? 0) > 0 || (bd?.itemBuild?.startingItems?.length ?? 0) > 0
-        }) ?? buildRows[0]
+    // Build content grouped by role. buildRows are ordered player-specific
+    // first, global last, so the first row with content per role wins.
+    const buildsByRole = new Map<Role, RoleBuild>()
+    for (const r of buildRows) {
+      const bd = r.buildData as BuildData | null
+      const hasContent =
+        (bd?.skillBuilds?.length ?? 0) > 0 ||
+        (bd?.itemBuild?.startingItems?.length ?? 0) > 0 ||
+        (bd?.itemBuild?.coreItems?.length ?? 0) > 0
+      if (!hasContent) continue
+      const role = r.role as Role
+      if (buildsByRole.has(role)) continue
+      buildsByRole.set(role, {
+        role,
+        playerId: r.playerId ?? null,
+        skillBuilds: bd?.skillBuilds ?? [],
+        itemBuild: bd?.itemBuild ?? EMPTY_ITEM_BUILD,
+        stats: (r.statsData as StatsData | null) ?? undefined,
+      })
+    }
 
-      const buildData = (first.buildData as BuildData) ?? { skillBuilds: [], itemBuild: EMPTY_ITEM_BUILD }
-      const statsData = (first.statsData as StatsData | null) ?? undefined
-
-      payload = {
-        heroId: first.heroId,
-        heroName: first.heroName,
-        heroSlug: first.heroSlug,
-        totalMatches: first.totalMatches,
-        winRate: first.winRate,
-        roleTabs: [],
-        buildRole: first.role as Role,
-        buildPlayerId: first.playerId ?? null,
-        skillBuilds: buildData.skillBuilds ?? [],
-        itemBuild: buildData.itemBuild ?? EMPTY_ITEM_BUILD,
-        stats: statsData,
-      }
-    } else {
-      const h = heroRow[0]
-      payload = {
-        heroId: h.id,
-        heroName: h.name,
-        heroSlug: h.slug,
-        totalMatches: 0,
-        winRate: 0,
-        roleTabs: [],
-        buildRole: null,
-        buildPlayerId: null,
-        skillBuilds: [],
-        itemBuild: EMPTY_ITEM_BUILD,
-        stats: undefined,
-      }
+    const base = heroRow[0]
+    const anyBuild = buildRows[0]
+    const payload: HeroBuild = {
+      heroId: base?.id ?? anyBuild.heroId,
+      heroName: base?.name ?? anyBuild.heroName,
+      heroSlug: base?.slug ?? anyBuild.heroSlug,
+      totalMatches: 0,
+      winRate: 0,
+      wins: 0,
+      roleTabs: [],
+      builds: [...buildsByRole.values()],
     }
 
     if (heroRow.length > 0) {
@@ -124,6 +116,7 @@ heroes.get('/:heroSlug', async (c) => {
         .where(matchFilter)
       if (statRows[0] && statRows[0].matches > 0) {
         payload.totalMatches = statRows[0].matches
+        payload.wins = statRows[0].wins
         payload.winRate = (statRows[0].wins / statRows[0].matches) * 100
         payload.kills = statRows[0].kills
         payload.deaths = statRows[0].deaths

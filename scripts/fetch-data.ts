@@ -62,11 +62,16 @@ async function main() {
 
   const heroList = await fetchJson<OpenDotaHero[]>(`${OPENDOTA}/heroes`)
   await sleep(RATE_MS)
-  for (const h of heroList) {
-    const values = { id: h.id, name: h.localized_name, slug: heroNameToSlug(h.name) }
-    await db.insert(heroes).values(values).onConflictDoUpdate({
+  // Single multi-row upsert instead of one round trip per hero.
+  const heroValues = heroList.map((h) => ({
+    id: h.id,
+    name: h.localized_name,
+    slug: heroNameToSlug(h.name),
+  }))
+  if (heroValues.length > 0) {
+    await db.insert(heroes).values(heroValues).onConflictDoUpdate({
       target: heroes.id,
-      set: { name: values.name, slug: values.slug },
+      set: { name: sql`excluded.name`, slug: sql`excluded.slug` },
     })
   }
   console.log(`Synced ${heroList.length} heroes.`)
