@@ -20,7 +20,7 @@ const emptyBuildData: BuildData = {
   },
 }
 
-async function main() {
+export async function run(): Promise<string> {
   const rows = await db
     .select({
       heroId: playerMatches.heroId,
@@ -99,12 +99,5 @@ async function main() {
     )
   }
 
-  console.log(
-    `populate-builds done: ${rows.length} rows upserted, ${stale.length} stale rows pruned.`
-  )
+  return `${rows.length} hero+role rows upserted, ${stale.length} stale rows pruned`
 }
-
-main().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})

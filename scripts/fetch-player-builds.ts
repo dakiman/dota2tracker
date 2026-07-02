@@ -485,13 +485,12 @@ function aggregateStats(matches: ParsedMatch[]): StatsData {
 // Main
 // ---------------------------------------------------------------------------
 
-async function main() {
+export async function run(): Promise<string> {
   await loadConstants()
 
   const playerRows = await db.select().from(players)
   if (playerRows.length === 0) {
-    console.log('No players in DB. Run seed first.')
-    process.exit(0)
+    return 'no players in DB — run seed first'
   }
 
   let totalUpdated = 0
@@ -612,10 +611,5 @@ async function main() {
     }
   }
 
-  console.log(`\nfetch-player-builds done: ${totalUpdated} updated, ${totalSkipped} skipped.`)
+  return `${totalUpdated} player builds updated, ${totalSkipped} skipped`
 }
-
-main().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})

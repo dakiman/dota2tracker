@@ -53,11 +53,10 @@ interface MatchRow {
   start_time: number
 }
 
-async function main() {
+export async function run(): Promise<string> {
   const playerRows = await db.select().from(players)
   if (playerRows.length === 0) {
-    console.log('No players in DB. Run seed first.')
-    process.exit(0)
+    return 'no players in DB — run seed first'
   }
 
   const heroList = await fetchJson<OpenDotaHero[]>(`${OPENDOTA}/heroes`)
@@ -78,6 +77,7 @@ async function main() {
 
   const heroIds = new Set(heroList.map((h) => h.id))
 
+  let totalRows = 0
   for (const player of playerRows) {
     const matches = await fetchJson<MatchRow[]>(
       `${OPENDOTA}/players/${player.id}/matches?${MATCH_PROJECT}`
@@ -122,13 +122,9 @@ async function main() {
           },
         })
     }
+    totalRows += rows.length
     console.log(`Upserted ${rows.length} matches for ${player.name} (${player.id})`)
   }
 
-  console.log('Fetch done.')
+  return `synced ${heroList.length} heroes; upserted ${totalRows} match rows for ${playerRows.length} players`
 }
-
-main().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})

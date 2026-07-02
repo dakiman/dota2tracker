@@ -119,7 +119,7 @@ function buildDurationStats(buckets: DurationBucket[]): MatchDurationWinRate[] {
 
 // --- Main ---
 
-async function main() {
+export async function run(): Promise<string> {
   const idMap = await buildItemIdMap()
   console.log(`Loaded ${idMap.size} item mappings.`)
   await sleep(RATE_MS)
@@ -179,10 +179,5 @@ async function main() {
     }
   }
 
-  console.log(`\nfetch-hero-builds done: ${updated} updated, ${skipped} skipped (curated).`)
+  return `${updated} hero builds updated, ${skipped} skipped (curated)`
 }
-
-main().catch((e) => {
-  console.error(e)
-  process.exit(1)
-})
