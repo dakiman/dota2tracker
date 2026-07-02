@@ -69,7 +69,7 @@ function sortIndicator(key: SortKey): string {
         >
           <td class="py-2 px-4">
             <RouterLink
-              :to="`/hero/${h.heroSlug}`"
+              :to="{ path: `/hero/${h.heroSlug}`, query: $route.query }"
               class="flex items-center gap-3 font-medium"
               style="color: var(--color-dota-text);"
             >

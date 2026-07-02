@@ -1,15 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
-import { useApi } from '@/composables/useApi'
 import { usePlayerFilterStore } from '@/stores/playerFilter'
-import type { AppConfig } from '@friendtracker/shared'
+import { useConfigStore } from '@/stores/config'
 
 const store = usePlayerFilterStore()
+const config = useConfigStore()
 const open = ref(false)
-const config = ref<AppConfig | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
 
-const players = computed(() => config.value?.players ?? [])
+const players = computed(() => config.players)
 
 function handleClickOutside(event: MouseEvent) {
   if (dropdownRef.value && !dropdownRef.value.contains(event.target as Node)) {
@@ -17,13 +16,9 @@ function handleClickOutside(event: MouseEvent) {
   }
 }
 
-onMounted(async () => {
+onMounted(() => {
   document.addEventListener('click', handleClickOutside)
-  try {
-    config.value = await useApi<AppConfig>('/api/config')
-  } catch {
-    config.value = { players: [], siteName: 'FriendTracker' }
-  }
+  config.load()
 })
 
 onBeforeUnmount(() => {

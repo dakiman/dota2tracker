@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import PlayerFilterDropdown from './PlayerFilterDropdown.vue'
+import { useConfigStore } from '@/stores/config'
+
+const config = useConfigStore()
 </script>
 
 <template>
@@ -9,7 +12,7 @@ import PlayerFilterDropdown from './PlayerFilterDropdown.vue'
     style="background-color: var(--color-dota-bg-card); border-color: var(--color-dota-border);"
   >
     <RouterLink to="/" class="font-heading text-xl font-semibold" style="color: var(--color-dota-gold);">
-      FriendTracker
+      {{ config.siteName }}
     </RouterLink>
     <nav class="flex items-center gap-6">
       <RouterLink

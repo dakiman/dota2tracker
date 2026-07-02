@@ -114,8 +114,12 @@ async function main() {
   const totalMatches = 1500
   const winRate = 53.5
 
-  await db
-    .delete(heroBuilds)
+  // Insert-only: don't clobber whatever populate-builds / fetch-hero-builds
+  // may have written to this row on a later pipeline pass. Re-running seed
+  // alone must not regress live stats back to the curated placeholders.
+  const existing = await db
+    .select({ heroSlug: heroBuilds.heroSlug })
+    .from(heroBuilds)
     .where(
       and(
         eq(heroBuilds.heroSlug, ABADDON_SLUG),
@@ -123,18 +127,24 @@ async function main() {
         isNull(heroBuilds.playerId)
       )
     )
-  await db.insert(heroBuilds).values({
-    heroId: ABADDON_ID,
-    heroSlug: ABADDON_SLUG,
-    heroName: ABADDON_NAME,
-    role,
-    playerId: null,
-    totalMatches,
-    winRate,
-    buildData: abaddonBuildData,
-    statsData: abaddonStatsData,
-  })
-  console.log('Seeded hero_builds (Abaddon).')
+    .limit(1)
+
+  if (existing.length === 0) {
+    await db.insert(heroBuilds).values({
+      heroId: ABADDON_ID,
+      heroSlug: ABADDON_SLUG,
+      heroName: ABADDON_NAME,
+      role,
+      playerId: null,
+      totalMatches,
+      winRate,
+      buildData: abaddonBuildData,
+      statsData: abaddonStatsData,
+    })
+    console.log('Seeded hero_builds (Abaddon).')
+  } else {
+    console.log('hero_builds (Abaddon) already present, skipping.')
+  }
 
   console.log('Seed done.')
 }

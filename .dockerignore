@@ -1,0 +1,14 @@
+# Never ship host build artifacts into the Docker context. node_modules in
+# particular holds symlinks into the pnpm store that don't exist in the image.
+node_modules
+**/node_modules
+dist
+**/dist
+.git
+.gitignore
+**/.env
+**/.env.*
+!**/.env.example
+*.log
+**/*.log
+.DS_Store

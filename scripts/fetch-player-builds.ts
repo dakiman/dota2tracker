@@ -19,30 +19,12 @@ import type {
   SituationalItem,
   MatchDurationWinRate,
 } from '@friendtracker/shared'
+import { fetchJson, sleep } from './lib/opendota.js'
 
 const OPENDOTA = 'https://api.opendota.com/api'
 const RATE_MS = 1100
 const MIN_PARSED_MATCHES = 3
 const MATCHES_TO_FETCH = 20
-
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms))
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const res = await fetch(url)
-    if (res.status === 429) {
-      const retryAfter = Number(res.headers.get('retry-after')) || 60
-      console.log(`    Rate limited, sleeping ${retryAfter}s before retry...`)
-      await sleep(retryAfter * 1000)
-      continue
-    }
-    if (!res.ok) throw new Error(`OpenDota ${res.status}: ${url}`)
-    return res.json() as Promise<T>
-  }
-  throw new Error(`OpenDota: gave up after 5 retries on ${url}`)
-}
 
 // ---------------------------------------------------------------------------
 // OpenDota response types

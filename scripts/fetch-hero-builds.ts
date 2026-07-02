@@ -7,19 +7,10 @@ import 'dotenv/config'
 import { db, heroBuilds, and, eq, isNull } from '../apps/api/src/db/index.js'
 import { sql } from 'drizzle-orm'
 import type { BuildData, StatsData, ItemGroup, SituationalItem, MatchDurationWinRate } from '@friendtracker/shared'
+import { fetchJson, sleep } from './lib/opendota.js'
 
 const OPENDOTA = 'https://api.opendota.com/api'
 const RATE_MS = 1100
-
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms))
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`OpenDota ${res.status}: ${url}`)
-  return res.json() as Promise<T>
-}
 
 // --- Item constants ---
 

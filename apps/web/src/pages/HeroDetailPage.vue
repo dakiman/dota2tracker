@@ -3,6 +3,7 @@ import { ref, watch, onMounted, computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useApi } from '@/composables/useApi'
 import { usePlayerFilterStore } from '@/stores/playerFilter'
+import { useConfigStore } from '@/stores/config'
 import type { HeroBuild } from '@friendtracker/shared'
 import HeroHeader from '@/components/hero/HeroHeader.vue'
 import SkillBuildCard from '@/components/hero/SkillBuildCard.vue'
@@ -17,6 +18,7 @@ import PerformanceStats from '@/components/hero/PerformanceStats.vue'
 
 const route = useRoute()
 const store = usePlayerFilterStore()
+const config = useConfigStore()
 const hero = ref<HeroBuild | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
@@ -29,6 +31,15 @@ const hasBuildData = computed(() => {
   return hero.value.skillBuilds.length > 0
     || hero.value.itemBuild.startingItems.length > 0
     || hero.value.itemBuild.coreItems.length > 0
+})
+
+const buildLabel = computed(() => {
+  if (!hero.value?.buildRole) return null
+  const pid = hero.value.buildPlayerId
+  const who = pid
+    ? config.players.find((p) => p.id === pid)?.name ?? 'Player'
+    : 'Global'
+  return { role: hero.value.buildRole.replace('_', ' '), who }
 })
 
 const hasKda = computed(() => {
@@ -123,6 +134,10 @@ watch([heroSlug, () => store.selectedPlayerIds], load)
         No build data available for this hero yet.
       </div>
       <template v-else>
+        <p v-if="buildLabel" class="text-xs text-dota-text-dim capitalize -mt-2">
+          Showing <span class="text-dota-text">{{ buildLabel.role }}</span> build ·
+          <span class="text-dota-text">{{ buildLabel.who }}</span>
+        </p>
         <!-- Two-column layout: Items left, Skills/Talents right -->
         <div class="grid gap-5 lg:grid-cols-[1fr_320px]">
           <!-- Left column: Items -->

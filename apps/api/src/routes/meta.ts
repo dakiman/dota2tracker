@@ -21,6 +21,12 @@ meta.get('/', async (c) => {
       .filter((id) => /^\d+$/.test(id))
       .slice(0, 50) ?? null
 
+    // A non-empty players param that yields no valid IDs is malformed — 400
+    // rather than silently dropping the filter and returning everyone.
+    if (playersParam && playerIds && playerIds.length === 0) {
+      return c.json({ error: 'Invalid players parameter' }, 400)
+    }
+
     const conditions = []
     if (playerIds?.length) {
       conditions.push(inArray(playerMatches.playerId, playerIds))
@@ -49,15 +55,12 @@ meta.get('/', async (c) => {
       .orderBy(desc(sql`COUNT(*)`))
       .limit(500)
 
-    const totalMatches = rows.reduce((sum, r) => sum + r.matches, 0)
     const result: HeroStat[] = rows.map((r) => {
       const winRate = r.matches > 0 ? (r.wins / r.matches) * 100 : 0
       const kda =
         r.deaths > 0
           ? ((r.kills + r.assists) / r.deaths).toFixed(2)
           : `${r.kills + r.assists}`
-      const pickRate =
-        totalMatches > 0 ? (r.matches / totalMatches) * 100 : undefined
       return {
         heroId: r.heroId,
         heroName: r.heroName,
@@ -66,7 +69,6 @@ meta.get('/', async (c) => {
         wins: r.wins,
         winRate,
         kda,
-        pickRate,
         role: r.role,
       }
     })

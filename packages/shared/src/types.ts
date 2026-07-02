@@ -25,9 +25,7 @@ export interface HeroStat {
   wins: number
   winRate: number
   kda: string
-  pickRate?: number
   role: Role
-  playerId?: string
 }
 
 /** Hero detail: role tab summary */
@@ -132,6 +130,10 @@ export interface HeroBuild {
   deaths?: number
   assists?: number
   roleTabs: RoleTabStat[]
+  /** Role the displayed build content belongs to (null when no build row) */
+  buildRole?: Role | null
+  /** Player the displayed build belongs to; null = global/curated build */
+  buildPlayerId?: string | null
   skillBuilds: SkillBuild[]
   itemBuild: ItemBuild
   stats?: StatsData

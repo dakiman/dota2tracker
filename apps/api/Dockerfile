@@ -19,7 +19,7 @@ COPY packages/shared/package.json packages/shared/package.json
 # Single layer: activate pnpm, install prod deps, drop caches — split layers
 # would keep the corepack/pnpm caches in the image even after deletion
 RUN corepack enable && corepack prepare pnpm@9 --activate \
-  && pnpm install --prod --frozen-lockfile \
+  && pnpm install --prod --frozen-lockfile --filter api... \
   && rm -rf /root/.cache /root/.local/share/pnpm /root/.npm
 COPY --from=builder /app/packages/shared/dist packages/shared/dist
 COPY --from=builder /app/apps/api/dist apps/api/dist

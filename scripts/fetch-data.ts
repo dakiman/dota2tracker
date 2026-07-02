@@ -8,20 +8,11 @@ import 'dotenv/config'
 import { sql } from 'drizzle-orm'
 import { db, heroes, playerMatches, players } from '../apps/api/src/db/index.js'
 import { heroNameToSlug, deriveRole } from '@friendtracker/shared'
+import { fetchJson, sleep } from './lib/opendota.js'
 
 const OPENDOTA = 'https://api.opendota.com/api'
 const RATE_MS = 1100
 const CHUNK = 500
-
-function sleep(ms: number) {
-  return new Promise((r) => setTimeout(r, ms))
-}
-
-async function fetchJson<T>(url: string): Promise<T> {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`OpenDota ${res.status}: ${url}`)
-  return res.json() as Promise<T>
-}
 
 interface OpenDotaHero {
   id: number
