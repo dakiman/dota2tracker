@@ -27,6 +27,11 @@ pnpm dev:web                    # start Vite dev server
 pnpm fetch-data                 # fetch live stats from OpenDota API (requires players in DB)
 ```
 
+In production the pipeline is scheduled: the `dota2tracker-refresh` container runs
+`fetch-data`+`populate-builds`+`request-parses` every 6 h and the build fetchers daily
+(`infra/refresh/crontab`), logging to the `refresh_runs` table (surfaced as
+`lastRefreshed` on `/api/config`).
+
 ### Build & Lint
 ```bash
 pnpm build                      # build all packages

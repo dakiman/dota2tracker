@@ -22,6 +22,11 @@ Health check: `curl -s http://localhost:8743/api/health`
 
 ## Data pipeline (run after first deploy or to refresh stats)
 
+**Refresh is scheduled** — the `dota2tracker-refresh` container syncs matches every
+6 h and rebuilds hero/player builds daily (see `infra/refresh/crontab`), logging every
+run to the `refresh_runs` table. The manual commands below still work for one-off
+runs and initial seeding.
+
 From the repo root, with `DATABASE_URL` pointing at the published Postgres port:
 
 ```bash
