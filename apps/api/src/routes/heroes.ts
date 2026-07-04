@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { and, desc, eq, inArray, or, sql } from 'drizzle-orm'
 import { db, heroBuilds, heroes as heroesTable, playerMatches } from '../db/index.js'
+import { parsePlayersParam } from './util.js'
 import type { BuildData, HeroBuild, Role, RoleBuild, RoleTabStat, StatsData } from '@friendtracker/shared'
 
 const heroes = new Hono()
@@ -20,16 +21,8 @@ heroes.get('/:heroSlug', async (c) => {
       return c.json({ error: 'Invalid hero slug' }, 400)
     }
 
-    const playersParam = c.req.query('players')
-    const playerIds = playersParam
-      ?.split(',')
-      .map((s) => s.trim())
-      .filter((id) => /^\d+$/.test(id))
-      .slice(0, 50) ?? null
-
-    // A non-empty players param that yields no valid IDs is malformed — 400
-    // rather than silently dropping the filter and returning everyone.
-    if (playersParam && playerIds && playerIds.length === 0) {
+    const playerIds = parsePlayersParam(c.req.query('players'))
+    if (playerIds === 'invalid') {
       return c.json({ error: 'Invalid players parameter' }, 400)
     }
 

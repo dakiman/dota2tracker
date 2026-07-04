@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { and, eq, inArray, sql, desc } from 'drizzle-orm'
 import { db, heroes, playerMatches } from '../db/index.js'
+import { parsePlayersParam } from './util.js'
 import type { HeroStat, Role } from '@friendtracker/shared'
 
 const meta = new Hono()
@@ -15,15 +16,8 @@ meta.get('/', async (c) => {
       return c.json({ error: 'Invalid role' }, 400)
     }
 
-    const playerIds = playersParam
-      ?.split(',')
-      .map((s) => s.trim())
-      .filter((id) => /^\d+$/.test(id))
-      .slice(0, 50) ?? null
-
-    // A non-empty players param that yields no valid IDs is malformed — 400
-    // rather than silently dropping the filter and returning everyone.
-    if (playersParam && playerIds && playerIds.length === 0) {
+    const playerIds = parsePlayersParam(playersParam)
+    if (playerIds === 'invalid') {
       return c.json({ error: 'Invalid players parameter' }, 400)
     }
 
