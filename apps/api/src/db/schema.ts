@@ -79,6 +79,7 @@ export const playerMatches = pgTable(
   (t) => [
     primaryKey({ columns: [t.playerId, t.matchId] }),
     index('player_matches_hero_idx').on(t.heroId),
+    index('player_matches_start_time_idx').on(t.startTime.desc()),
   ]
 )
 
