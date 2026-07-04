@@ -148,3 +148,34 @@ export interface HeroBuild {
   /** Build content per role that has any; role tabs switch between these */
   builds: RoleBuild[]
 }
+
+/** Feed: one tracked player's line inside a match card */
+export interface MatchParticipant {
+  playerId: string
+  playerName: string
+  avatar: string | null
+  heroId: number
+  heroName: string
+  heroSlug: string
+  won: boolean
+  kills: number
+  deaths: number
+  assists: number
+  role: Role
+}
+
+/** Feed: one match card — party games have several participants */
+export interface MatchFeedEntry {
+  matchId: number
+  /** ISO 8601 */
+  startTime: string
+  /** seconds */
+  duration: number
+  participants: MatchParticipant[]
+}
+
+export interface MatchesResponse {
+  matches: MatchFeedEntry[]
+  /** Epoch-seconds cursor for the next page, null when this page wasn't full */
+  nextBefore: number | null
+}

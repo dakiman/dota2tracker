@@ -24,13 +24,15 @@ export default async function setup() {
   await pool.query(
     `INSERT INTO heroes (id, name, slug) VALUES (1, 'Anti-Mage', 'antimage'), (2, 'Axe', 'axe')`
   )
+  // Fixed, distinct start_times so feed-ordering and cursor tests are deterministic.
+  // 2026-01-02T10:00:00Z = epoch 1767348000; 2026-01-01T10:00:00Z = 1767261600.
   await pool.query(`
     INSERT INTO player_matches
       (player_id, match_id, hero_id, won, kills, deaths, assists, duration, start_time, role)
     VALUES
-      ('111', 1001, 1, true,  10, 2,  5, 2400, now(), 'carry'),
-      ('111', 1002, 1, false,  3, 8,  4, 1800, now(), 'carry'),
-      ('222', 1001, 2, true,   5, 5, 15, 2400, now(), 'offlane')
+      ('111', 1001, 1, true,  10, 2,  5, 2400, '2026-01-02T10:00:00Z', 'carry'),
+      ('111', 1002, 1, false,  3, 8,  4, 1800, '2026-01-01T10:00:00Z', 'carry'),
+      ('222', 1001, 2, true,   5, 5, 15, 2400, '2026-01-02T10:00:00Z', 'offlane')
   `)
   await pool.end()
 }
