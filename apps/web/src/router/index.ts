@@ -4,6 +4,7 @@ import HomePage from '@/pages/HomePage.vue'
 import MetaPage from '@/pages/MetaPage.vue'
 import HeroDetailPage from '@/pages/HeroDetailPage.vue'
 import TogetherPage from '@/pages/TogetherPage.vue'
+import PlayerProfilePage from '@/pages/PlayerProfilePage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,6 +13,7 @@ const router = createRouter({
     { path: '/meta', name: 'meta', component: MetaPage },
     { path: '/together', name: 'together', component: TogetherPage },
     { path: '/hero/:heroSlug', name: 'hero', component: HeroDetailPage },
+    { path: '/player/:id', name: 'player', component: PlayerProfilePage },
   ],
 })
 

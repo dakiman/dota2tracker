@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink } from 'vue-router'
 import { usePlayerFilterStore } from '@/stores/playerFilter'
 import { useConfigStore } from '@/stores/config'
 
@@ -73,7 +74,15 @@ function toggle(id: string) {
           :checked="store.selectedPlayerIds.length === 0 || store.selectedPlayerIds.includes(p.id)"
           @change="toggle(p.id)"
         />
-        <span>{{ p.name }}</span>
+        <span class="flex-1">{{ p.name }}</span>
+        <RouterLink
+          :to="`/player/${p.id}`"
+          class="text-dota-text-dim hover:text-dota-gold transition-colors text-xs"
+          title="View profile"
+          @click.stop="open = false"
+        >
+          →
+        </RouterLink>
       </label>
     </div>
   </div>
