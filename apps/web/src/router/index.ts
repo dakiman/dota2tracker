@@ -3,12 +3,14 @@ import { usePlayerFilterStore } from '@/stores/playerFilter'
 import HomePage from '@/pages/HomePage.vue'
 import MetaPage from '@/pages/MetaPage.vue'
 import HeroDetailPage from '@/pages/HeroDetailPage.vue'
+import TogetherPage from '@/pages/TogetherPage.vue'
 
 const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/', name: 'home', component: HomePage },
     { path: '/meta', name: 'meta', component: MetaPage },
+    { path: '/together', name: 'together', component: TogetherPage },
     { path: '/hero/:heroSlug', name: 'hero', component: HeroDetailPage },
   ],
 })

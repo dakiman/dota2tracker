@@ -22,6 +22,13 @@ const config = useConfigStore()
       >
         Meta
       </RouterLink>
+      <RouterLink
+        to="/together"
+        class="opacity-80 hover:opacity-100 transition"
+        style="color: var(--color-dota-text);"
+      >
+        Together
+      </RouterLink>
       <PlayerFilterDropdown />
     </nav>
   </header>
