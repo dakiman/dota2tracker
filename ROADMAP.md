@@ -6,7 +6,7 @@ in `docs/superpowers/plans/2026-07-02-roadmap-implementation-plan.md`.*
 
 **Status 2026-07-02 (post-implementation):** Phases 1 and 2 are **implemented and merged
 to main** (`5403587`) via the executable plans in `docs/superpowers/plans/` (both plan docs
-have their checkboxes ticked and double as build logs). **Next up: Phase 2.5.** The only
+have their checkboxes ticked and double as build logs). **Next up: Phase 3 — prerequisites first (backups, Drizzle snapshots, tunnel cutover).** The only
 Phase 1/2 remainder is the operator prod rollout — see the note in Phase 1 below.
 
 This is the single source of truth for **where the product is going**. Architecture and
@@ -121,7 +121,7 @@ All items below shipped except rate limiting, which stays deferred to Phase 3a a
 - **Rate limiting: deferred to Phase 3a** *(changed)* — nothing mutates yet;
   `hono-rate-limiter` is a 20-minute add and lands with the first mutating endpoint.
 
-## Phase 2.5 — Product wins on existing data — **← NEXT UP** — ~2–3 days, each item independently shippable
+## Phase 2.5 — Product wins on existing data — ✅ DONE 2026-07-03
 
 `player_matches` already supports friend-group features that need **no auth and no
 schema surgery** — worth shipping before the accounts arc so the site gets better for
