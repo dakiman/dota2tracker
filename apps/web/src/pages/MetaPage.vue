@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from 'vue'
-import { useApi } from '@/composables/useApi'
+import { useApi, ApiError } from '@/composables/useApi'
 import { usePlayerFilterStore } from '@/stores/playerFilter'
 import type { HeroStat } from '@friendtracker/shared'
 import HeroTable from '@/components/meta/HeroTable.vue'
 import RoleFilterTabs from '@/components/meta/RoleFilterTabs.vue'
+import ErrorState from '@/components/layout/ErrorState.vue'
 
 const store = usePlayerFilterStore()
 const role = ref<string>('')
 const heroes = ref<HeroStat[]>([])
 const loading = ref(true)
-const error = ref<string | null>(null)
+const error = ref<ApiError | null>(null)
 
 let currentLoadId = 0
 
@@ -30,7 +31,7 @@ async function load() {
   } catch (e) {
     if (loadId !== currentLoadId) return
     heroes.value = []
-    error.value = e instanceof Error ? e.message : 'Failed to load hero stats'
+    error.value = e instanceof ApiError ? e : new ApiError('Failed to load hero stats', 0)
   } finally {
     if (loadId === currentLoadId) loading.value = false
   }
@@ -44,7 +45,7 @@ watch([() => store.selectedPlayerIds, role], load)
   <div>
     <h1 class="font-heading text-3xl text-dota-gold mb-6">Hero Meta</h1>
     <RoleFilterTabs v-model="role" class="mb-6" />
-    <div v-if="error" class="text-dota-red mb-4">{{ error }}</div>
-    <HeroTable :heroes="heroes" :loading="loading" />
+    <ErrorState v-if="error" :status="error.status" @retry="load" />
+    <HeroTable v-else :heroes="heroes" :loading="loading" />
   </div>
 </template>

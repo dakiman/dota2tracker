@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, watch, onMounted, computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { useApi } from '@/composables/useApi'
+import { useApi, ApiError } from '@/composables/useApi'
+import ErrorState from '@/components/layout/ErrorState.vue'
 import { usePlayerFilterStore } from '@/stores/playerFilter'
 import { useConfigStore } from '@/stores/config'
 import type { HeroBuild, Role } from '@friendtracker/shared'
@@ -21,7 +22,7 @@ const store = usePlayerFilterStore()
 const config = useConfigStore()
 const hero = ref<HeroBuild | null>(null)
 const loading = ref(true)
-const error = ref<string | null>(null)
+const error = ref<ApiError | null>(null)
 const activeTab = ref<'builds' | 'stats'>('builds')
 const activeRole = ref<Role | null>(null)
 
@@ -94,7 +95,7 @@ async function load() {
   } catch (e) {
     if (loadId !== currentLoadId) return
     hero.value = null
-    error.value = e instanceof Error ? e.message : 'Failed to load hero data'
+    error.value = e instanceof ApiError ? e : new ApiError('Failed to load hero data', 0)
   } finally {
     if (loadId === currentLoadId) loading.value = false
   }
@@ -254,9 +255,7 @@ watch([heroSlug, () => store.selectedPlayerIds], load)
       <PerformanceStats v-if="activeStats" :stats="activeStats" />
     </template>
   </div>
-  <div v-else-if="error" class="py-16 text-center">
-    <p class="text-dota-text-dim text-lg mb-2">Hero not found</p>
-    <p class="text-dota-text-dim text-sm mb-6">{{ error }}</p>
+  <ErrorState v-else-if="error" :status="error.status" not-found-message="Hero not found" @retry="load">
     <RouterLink
       to="/meta"
       class="inline-block px-4 py-2 rounded text-sm font-medium"
@@ -264,7 +263,7 @@ watch([heroSlug, () => store.selectedPlayerIds], load)
     >
       ← Back to Heroes
     </RouterLink>
-  </div>
+  </ErrorState>
   <div v-else class="text-dota-red py-12 text-center">Hero not found.</div>
 </template>
 
