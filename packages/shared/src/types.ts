@@ -179,3 +179,28 @@ export interface MatchesResponse {
   /** Epoch-seconds cursor for the next page, null when this page wasn't full */
   nextBefore: number | null
 }
+
+/** Together page: one same-team pair (playerA < playerB) */
+export interface DuoStat {
+  playerA: string
+  playerB: string
+  matches: number
+  wins: number
+  winRate: number
+}
+
+/** Together page: per-player split — with >=1 tracked same-team friend vs alone */
+export interface TogetherPlayerStat {
+  playerId: string
+  togetherMatches: number
+  togetherWins: number
+  togetherWinRate: number
+  soloMatches: number
+  soloWins: number
+  soloWinRate: number
+}
+
+export interface TogetherResponse {
+  duos: DuoStat[]
+  players: TogetherPlayerStat[]
+}

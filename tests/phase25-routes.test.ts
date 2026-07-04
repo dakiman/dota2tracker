@@ -1,4 +1,4 @@
-import { describe, it, expect, afterAll } from 'vitest'
+import { describe, it, expect, afterAll, beforeAll } from 'vitest'
 import { app } from '../apps/api/src/app.js'
 import { pool } from '../apps/api/src/db/index.js'
 
@@ -75,6 +75,68 @@ describe('GET /api/matches', () => {
 
   it('rejects an all-invalid players param with 400', async () => {
     const res = await app.request('/api/matches?players=abc')
+    expect(res.status).toBe(400)
+  })
+})
+
+describe('GET /api/together', () => {
+  // Extra fixture: match 1003 where 111 and 222 are on OPPOSITE teams
+  // (different won values) — must not count as a duo game.
+  beforeAll(async () => {
+    await pool.query(`
+      INSERT INTO player_matches
+        (player_id, match_id, hero_id, won, kills, deaths, assists, duration, start_time, role)
+      VALUES
+        ('111', 1003, 2, false, 1, 9, 2, 2000, '2026-01-03T10:00:00Z', 'offlane'),
+        ('222', 1003, 1, true,  9, 1, 8, 2000, '2026-01-03T10:00:00Z', 'carry')
+    `)
+  })
+
+  afterAll(async () => {
+    await pool.query(`DELETE FROM player_matches WHERE match_id = 1003`)
+  })
+
+  it('counts same-team games as duos, ignores opposite-team games', async () => {
+    const res = await app.request('/api/together')
+    expect(res.status).toBe(200)
+    const body = await res.json()
+    expect(body.duos).toEqual([
+      { playerA: '111', playerB: '222', matches: 1, wins: 1, winRate: 100 },
+    ])
+  })
+
+  it('splits each player into together vs solo', async () => {
+    const res = await app.request('/api/together')
+    const body = await res.json()
+    const alice = body.players.find((p: { playerId: string }) => p.playerId === '111')
+    // 1001 together (won); 1002 and 1003 solo (no tracked same-team friend), both lost
+    expect(alice).toMatchObject({
+      togetherMatches: 1,
+      togetherWins: 1,
+      togetherWinRate: 100,
+      soloMatches: 2,
+      soloWins: 0,
+      soloWinRate: 0,
+    })
+    const bob = body.players.find((p: { playerId: string }) => p.playerId === '222')
+    expect(bob).toMatchObject({
+      togetherMatches: 1,
+      togetherWins: 1,
+      soloMatches: 1,
+      soloWins: 1,
+    })
+  })
+
+  it('players filter requires both duo members to be selected', async () => {
+    const res = await app.request('/api/together?players=111')
+    const body = await res.json()
+    expect(body.duos).toEqual([])
+    expect(body.players).toHaveLength(1)
+    expect(body.players[0].playerId).toBe('111')
+  })
+
+  it('rejects an all-invalid players param with 400', async () => {
+    const res = await app.request('/api/together?players=abc')
     expect(res.status).toBe(400)
   })
 })
