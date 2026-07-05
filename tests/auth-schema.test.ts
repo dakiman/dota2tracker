@@ -10,7 +10,7 @@ describe('users/sessions schema', () => {
   it('inserts a user with defaults and links a session', async () => {
     const [user] = await db
       .insert(users)
-      .values({ steamId: '76561197960265839', playerId: '111', name: 'Alice' })
+      .values({ steamId: '76561197960280001', playerId: '111', name: 'Alice' })
       .returning()
     expect(user.provider).toBe('steam')
     expect(user.createdAt).toBeInstanceOf(Date)
