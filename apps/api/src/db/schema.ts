@@ -92,3 +92,36 @@ export const refreshRuns = pgTable('refresh_runs', {
   ok: boolean('ok'),
   detail: jsonb('detail').$type<{ summary?: string; error?: string }>(),
 })
+
+/** Authenticated site users. Steam OpenID only; `provider` is the
+ *  discriminator kept so another provider could be added later. */
+export const users = pgTable(
+  'users',
+  {
+    id: serial('id').primaryKey(),
+    provider: text('provider').notNull().default('steam'),
+    steamId: text('steam_id').notNull(),
+    playerId: text('player_id').references(() => players.id, {
+      onDelete: 'set null',
+    }),
+    name: text('name').notNull().default(''),
+    avatar: text('avatar'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('users_provider_steam_idx').on(t.provider, t.steamId)]
+)
+
+/** Session rows keyed by the sha256 hex of the opaque cookie token —
+ *  DB dumps land in the backup dir and must not contain live tokens. */
+export const sessions = pgTable(
+  'sessions',
+  {
+    id: text('id').primaryKey(),
+    userId: integer('user_id')
+      .references(() => users.id, { onDelete: 'cascade' })
+      .notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  },
+  (t) => [index('sessions_expires_idx').on(t.expiresAt)]
+)
