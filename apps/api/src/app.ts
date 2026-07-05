@@ -6,9 +6,12 @@ import matches from './routes/matches.js'
 import together from './routes/together.js'
 import auth from './routes/auth.js'
 import { sessionMiddleware, type AuthEnv } from './middleware/session.js'
+import { rateLimit } from './middleware/rate-limit.js'
 
 export const app = new Hono<AuthEnv>()
 
+app.use('/api/auth/*', rateLimit({ windowMs: 60_000, max: 10 }))
+app.use('/api/*', rateLimit({ windowMs: 60_000, max: 300 }))
 app.use('/api/*', sessionMiddleware)
 
 app.route('/api/auth', auth)
