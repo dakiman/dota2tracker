@@ -35,7 +35,7 @@ Migrations 0001–0006 were hand-written; `apps/api/src/db/migrations/meta/` has
 - Create: `apps/api/src/db/migrations/meta/0006_snapshot.json`
 - Do NOT touch: `apps/api/src/db/migrations/meta/_journal.json` (snapshots are meta-only; `migrate()` never reads them)
 
-- [ ] **Step 1: Generate a fresh snapshot of the current schema into a throwaway dir**
+- [x] **Step 1: Generate a fresh snapshot of the current schema into a throwaway dir**
 
 ```bash
 cd /home/dakiman/dev/dota2tracker/apps/api
@@ -44,7 +44,7 @@ pnpm exec drizzle-kit generate --dialect postgresql --schema ./src/db/schema.ts 
 
 Expected: creates `.drizzle-tmp/0000_<random_name>.sql` and `.drizzle-tmp/meta/0000_snapshot.json` (+ `_journal.json`). The SQL file is discarded; only the snapshot matters.
 
-- [ ] **Step 2: Install it as the 0006 snapshot, chaining prevId to the existing 0000**
+- [x] **Step 2: Install it as the 0006 snapshot, chaining prevId to the existing 0000**
 
 ```bash
 cp .drizzle-tmp/meta/0000_snapshot.json src/db/migrations/meta/0006_snapshot.json
@@ -56,7 +56,7 @@ Then edit `src/db/migrations/meta/0006_snapshot.json`: change the top-level `"pr
 rm -rf .drizzle-tmp
 ```
 
-- [ ] **Step 3: Acid test — generation reports a clean slate**
+- [x] **Step 3: Acid test — generation reports a clean slate**
 
 ```bash
 cd /home/dakiman/dev/dota2tracker
@@ -67,12 +67,12 @@ Expected: `No schema changes, nothing to migrate 😴` and `git status -s` shows
 
 *(Optional, interactive-only, skip in agent runs: with the test DB freshly migrated by `pnpm test`, `DATABASE_URL=postgresql://friendtracker:devpassword@localhost:5474/friendtracker_test pnpm --filter api exec drizzle-kit push` should report no changes — a drift check between the hand-written SQL and `schema.ts`. Never let `push` apply anything. Task 3's SQL inspection is the real guard.)*
 
-- [ ] **Step 4: Confirm tests still pass (migrations untouched)**
+- [x] **Step 4: Confirm tests still pass (migrations untouched)**
 
 Run: `pnpm test`
 Expected: all existing tests PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/db/migrations/meta/0006_snapshot.json
@@ -100,7 +100,7 @@ Backups run as a `run-job.ts` job (not a bare cron shell line) so every run writ
 **Interfaces:**
 - Produces: `filesToDelete(names: string[], now: Date, keepDays: number): string[]` in `scripts/lib/backup-rotation.ts`; job name `backup-db` runnable via `tsx scripts/run-job.ts backup-db`; env `BACKUP_DIR` (default `/backups`), `BACKUP_KEEP_DAYS` (default `7`).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/backup-rotation.test.ts`:
 
@@ -136,12 +136,12 @@ describe('filesToDelete', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm exec vitest run tests/backup-rotation.test.ts`
 Expected: FAIL — cannot find module `../scripts/lib/backup-rotation.js`.
 
-- [ ] **Step 3: Implement the rotation helper**
+- [x] **Step 3: Implement the rotation helper**
 
 Create `scripts/lib/backup-rotation.ts`:
 
@@ -165,12 +165,12 @@ export function filesToDelete(names: string[], now: Date, keepDays: number): str
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `pnpm exec vitest run tests/backup-rotation.test.ts`
 Expected: PASS (3 tests).
 
-- [ ] **Step 5: Implement the backup job**
+- [x] **Step 5: Implement the backup job**
 
 Create `scripts/backup-db.ts`:
 
@@ -216,7 +216,7 @@ Modify `scripts/run-job.ts` — add one entry to the JOBS map after `'request-pa
   'backup-db': () => import('./backup-db.js'),
 ```
 
-- [ ] **Step 6: Wire image, cron, compose, env**
+- [x] **Step 6: Wire image, cron, compose, env**
 
 `infra/refresh/Dockerfile` — after the `RUN corepack enable && corepack prepare pnpm@9 --activate` line, add:
 
@@ -267,7 +267,7 @@ BACKUP_DIR=/backups
 BACKUP_KEEP_DAYS=7
 ```
 
-- [ ] **Step 7: Verify end-to-end in the local stack**
+- [x] **Step 7: Verify end-to-end in the local stack**
 
 ```bash
 pnpm lint && pnpm test
@@ -284,7 +284,7 @@ sg docker -c "docker compose -p dota2tracker exec db psql -U friendtracker -c \"
 
 Expected: one row with `ok = t`. (Note: the refresh container's entrypoint also runs a fetch-data on start — harmless.) Afterwards you may stop the extra services: `sg docker -c 'docker compose -p dota2tracker stop refresh'` (keep `db` up for tests).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add scripts/lib/backup-rotation.ts scripts/backup-db.ts scripts/run-job.ts infra/refresh/Dockerfile infra/refresh/crontab docker-compose.yml .env.example tests/backup-rotation.test.ts
@@ -307,7 +307,7 @@ This is the real acid test for Task 1: the migration must be produced by `drizzl
 **Interfaces:**
 - Produces (consumed by Tasks 5–6): tables `users` (`id serial PK`, `provider text NOT NULL DEFAULT 'steam'`, `steam_id text NOT NULL`, `player_id text NULL` FK→players ON DELETE SET NULL, `name text NOT NULL DEFAULT ''`, `avatar text NULL`, `created_at timestamptz NOT NULL DEFAULT now()`, unique `(provider, steam_id)`) and `sessions` (`id text PK`, `user_id integer NOT NULL` FK→users ON DELETE CASCADE, `created_at timestamptz NOT NULL DEFAULT now()`, `expires_at timestamptz NOT NULL`, index on `expires_at`). Drizzle objects `users`, `sessions` re-exported from `apps/api/src/db/index.js`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/auth-schema.test.ts`:
 
@@ -357,12 +357,12 @@ describe('users/sessions schema', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm exec vitest run tests/auth-schema.test.ts`
 Expected: FAIL — `users`/`sessions` are not exported from the db module.
 
-- [ ] **Step 3: Add the tables to schema.ts**
+- [x] **Step 3: Add the tables to schema.ts**
 
 Append to `apps/api/src/db/schema.ts` (matching the existing style — `uniqueIndex`, `index`, `timestamp(..., { withTimezone: true })` are already imported):
 
@@ -401,7 +401,7 @@ export const sessions = pgTable(
 )
 ```
 
-- [ ] **Step 4: Generate the migration and inspect it**
+- [x] **Step 4: Generate the migration and inspect it**
 
 ```bash
 pnpm --filter api db:generate
@@ -409,12 +409,12 @@ pnpm --filter api db:generate
 
 Expected: a new `apps/api/src/db/migrations/0007_<random_name>.sql` plus `meta/0007_snapshot.json` and an appended `_journal.json` entry (idx 7). **Open the SQL and verify it contains ONLY**: two `CREATE TABLE` statements (`users`, `sessions`), the two FK constraints, `users_provider_steam_idx`, and `sessions_expires_idx`. **Any `ALTER` touching existing tables means the hand-written 0001–0006 SQL drifted from schema.ts — STOP and report; do not apply.**
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `pnpm exec vitest run tests/auth-schema.test.ts`
 Expected: PASS (global-setup recreates `friendtracker_test` and `migrate()` applies 0007). Then `pnpm test` — everything green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/db/schema.ts apps/api/src/db/migrations tests/auth-schema.test.ts
@@ -436,7 +436,7 @@ Hand-rolled Steam OpenID 2.0 in stateless mode (~100 lines, no deps). Replay pro
 **Interfaces:**
 - Produces (consumed by Task 6): `steam64ToAccountId(steam64: string): string`; `openidEndpoint(): string`; `buildLoginUrl(origin: string): string`; `verifyAssertion(url: URL, origin: string): Promise<string | null>` (returns steam64 or null). Constant `STEAM64_BASE = 76561197960265728n`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/openid.test.ts`:
 
@@ -549,12 +549,12 @@ describe('verifyAssertion', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm exec vitest run tests/openid.test.ts`
 Expected: FAIL — cannot find module `../apps/api/src/auth/openid.js`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/api/src/auth/openid.ts`:
 
@@ -626,12 +626,12 @@ export async function verifyAssertion(url: URL, origin: string): Promise<string 
 }
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
+- [x] **Step 4: Run the test to verify it passes**
 
 Run: `pnpm exec vitest run tests/openid.test.ts`
 Expected: PASS (9 tests). Also `pnpm lint`.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/auth/openid.ts tests/openid.test.ts
@@ -658,7 +658,7 @@ Opaque 32-byte tokens in an httpOnly cookie; the DB stores only the sha256. Slid
 - Consumes: `users`, `sessions` from Task 3.
 - Produces (consumed by Tasks 6/8): shared type `AuthUser { id: number; steamId: string; playerId: string | null; name: string; avatar: string | null }`; `SESSION_COOKIE = 'session'`; `createSession(userId: number): Promise<{ token: string; expiresAt: Date }>`; `sessionUser(token: string): Promise<AuthUser | null>`; `deleteSession(token: string): Promise<void>`; `AuthEnv = { Variables: { user: AuthUser | null } }` + `sessionMiddleware` from `middleware/session.js`; routes `GET /api/auth/me` → `{ user: AuthUser | null }` (always 200) and `POST /api/auth/logout` → `{ ok: true }`.
 
-- [ ] **Step 1: Add the shared type**
+- [x] **Step 1: Add the shared type**
 
 Append to `packages/shared/src/types.ts`:
 
@@ -676,7 +676,7 @@ export interface AuthUser {
 Run: `pnpm --filter @friendtracker/shared build`
 Expected: builds clean.
 
-- [ ] **Step 2: Write the failing test**
+- [x] **Step 2: Write the failing test**
 
 Create `tests/auth-routes.test.ts` (unique `x-real-ip` per test — the strict `/api/auth/*` rate limit from Task 7 is 10/min/IP; unique `steam_id`s vs other files):
 
@@ -778,12 +778,12 @@ describe('POST /api/auth/logout', () => {
 })
 ```
 
-- [ ] **Step 3: Run it to verify it fails**
+- [x] **Step 3: Run it to verify it fails**
 
 Run: `pnpm exec vitest run tests/auth-routes.test.ts`
 Expected: FAIL — cannot find module `../apps/api/src/auth/session.js`.
 
-- [ ] **Step 4: Implement session store, middleware, routes, wiring**
+- [x] **Step 4: Implement session store, middleware, routes, wiring**
 
 Create `apps/api/src/auth/session.ts`:
 
@@ -918,12 +918,12 @@ app.route('/api/together', together)
 app.get('/api/health', (c) => c.json({ ok: true }))
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter @friendtracker/shared build && pnpm exec vitest run tests/auth-routes.test.ts`
 Expected: PASS (7 tests). Then `pnpm test` and `pnpm lint` — all green (existing route tests unaffected: anonymous requests skip the DB entirely).
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/shared/src/types.ts apps/api/src/auth/session.ts apps/api/src/middleware/session.ts apps/api/src/routes/auth.ts apps/api/src/app.ts tests/auth-routes.test.ts
@@ -950,7 +950,7 @@ The multi-origin problem: the site is reached via LAN IP, maybe Tailscale, later
 - Consumes: Task 4 helpers, Task 5 `createSession`/`SESSION_COOKIE`, Task 3 `users`.
 - Produces: `resolveOrigin(c: Context): string | null` and `allowedOrigins(): string[]` in `auth/origin.js`; `fetchSteamProfile(accountId: string): Promise<{ name: string; avatar: string | null }>` in `auth/profile.js`; routes `GET /api/auth/steam/login` (302 to Steam) and `GET /api/auth/steam/return` (302 to `/` with session cookie). Env: `ALLOWED_ORIGINS` (default `http://localhost:5173,http://localhost:3000`), `OPENDOTA_URL` (default `https://api.opendota.com/api`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Extend `tests/auth-routes.test.ts`. Add to the imports:
 
@@ -1104,12 +1104,12 @@ describe('GET /api/auth/steam/return', () => {
 })
 ```
 
-- [ ] **Step 2: Run to verify the new tests fail**
+- [x] **Step 2: Run to verify the new tests fail**
 
 Run: `pnpm exec vitest run tests/auth-routes.test.ts`
 Expected: Task 5 tests still PASS; new describes FAIL (404 — routes don't exist).
 
-- [ ] **Step 3: Implement origin + profile + routes**
+- [x] **Step 3: Implement origin + profile + routes**
 
 Create `apps/api/src/auth/origin.ts`:
 
@@ -1249,12 +1249,12 @@ ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 OPENDOTA_URL=https://api.opendota.com/api
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm exec vitest run tests/auth-routes.test.ts`
 Expected: PASS (all describes). Then `pnpm test` + `pnpm lint` — green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/auth/origin.ts apps/api/src/auth/profile.ts apps/api/src/routes/auth.ts apps/web/vite.config.ts .env.example tests/auth-routes.test.ts
@@ -1277,7 +1277,7 @@ Roadmap decision: rate limiting lands with auth. Hand-rolled fixed-window instea
 **Interfaces:**
 - Produces: `rateLimit(opts: { windowMs: number; max: number; now?: () => number }): MiddlewareHandler`. Wiring: `/api/auth/*` 10/min, `/api/*` 300/min (both count for auth paths; strict one wins).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/rate-limit.test.ts` (unit-level on a fresh Hono app with an injected clock, plus one integration check on the real app):
 
@@ -1347,12 +1347,12 @@ describe('app wiring', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm exec vitest run tests/rate-limit.test.ts`
 Expected: FAIL — cannot find module `../apps/api/src/middleware/rate-limit.js`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Create `apps/api/src/middleware/rate-limit.ts`:
 
@@ -1405,12 +1405,12 @@ app.use('/api/*', rateLimit({ windowMs: 60_000, max: 300 }))
 app.use('/api/*', sessionMiddleware)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm exec vitest run tests/rate-limit.test.ts`
 Expected: PASS. Then the full `pnpm test` — the auth-routes file must stay green (it sends a unique `x-real-ip` per test, so no test crosses the 10/min auth window). `pnpm lint` green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/middleware/rate-limit.ts apps/api/src/app.ts tests/rate-limit.test.ts
@@ -1434,7 +1434,7 @@ Minimal by design: a login link, "signed in as", logout. No gated features — n
 **Interfaces:**
 - Consumes: `GET /api/auth/me` → `{ user: AuthUser | null }`, `POST /api/auth/logout` (Task 5/6); `AuthUser` from `@friendtracker/shared`; memoized-load pattern from `apps/web/src/stores/config.ts`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/auth-store.test.ts`:
 
@@ -1493,12 +1493,12 @@ describe('auth store', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm exec vitest run tests/auth-store.test.ts`
 Expected: FAIL — cannot find module `../apps/web/src/stores/auth`.
 
-- [ ] **Step 3: Implement store + UI**
+- [x] **Step 3: Implement store + UI**
 
 Create `apps/web/src/stores/auth.ts`:
 
@@ -1589,12 +1589,12 @@ onMounted(() => {
 })
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm exec vitest run tests/auth-store.test.ts`
 Expected: PASS. Then `pnpm lint` (vue-tsc) and full `pnpm test` — green.
 
-- [ ] **Step 5: Live spike — real Steam login (the roadmap's "early spike")**
+- [x] **Step 5: Live spike — real Steam login (the roadmap's "early spike")** *(non-credentialed half verified via headless playwright: header renders "Sign in with Steam"; API 302s to the real steamcommunity.com OpenID endpoint with correct realm/return_to; allowlist correctly 403s unknown origins. Full credentialed login + return round-trip needs interactive Steam creds + Steam Guard — flagged for operator.)*
 
 ```bash
 pnpm dev:api    # terminal 1 (DATABASE_URL from .env, port 3000)
@@ -1603,7 +1603,7 @@ pnpm dev:web    # terminal 2
 
 On `http://localhost:5173`: click "Sign in with Steam" → real Steam login page → redirected back signed-in (header shows persona name); reload keeps the session; "Log out" clears it. This exercises the full OpenID round-trip against the real OP — the one thing mocks can't prove. If Steam rejects the redirect, compare `openid.return_to` in the address bar against `ALLOWED_ORIGINS`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/stores/auth.ts apps/web/src/components/layout/NavBar.vue apps/web/src/App.vue tests/auth-store.test.ts
@@ -1621,15 +1621,15 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Modify: `ROADMAP.md`
 - Modify: `DEPLOY.md`
 
-- [ ] **Step 1: Update CLAUDE.md**
+- [x] **Step 1: Update CLAUDE.md**
 
 In the Database section, note that migrations are **generated again** (`pnpm --filter api db:generate` works; the snapshot repair installed `meta/0006_snapshot.json` — hand-written-migration warnings are obsolete). In Environment, add `ALLOWED_ORIGINS` (auth origin allowlist), `OPENDOTA_URL`, `BACKUP_DIR`/`BACKUP_KEEP_DAYS`. In API routes, add `GET/POST /api/auth/*` (me, logout, steam/login, steam/return).
 
-- [ ] **Step 2: Update ROADMAP.md**
+- [x] **Step 2: Update ROADMAP.md**
 
 Mark the two Phase 3 prerequisites (backups, Drizzle snapshots) and **Phase 3a — ✅ DONE** with the merge date; update the status header ("Next up: Phase 3b"); move the "Drizzle snapshots out of sync" standing task to done (generation restored; hand-write convention retired).
 
-- [ ] **Step 3: Update DEPLOY.md — operator section**
+- [x] **Step 3: Update DEPLOY.md — operator section**
 
 Add (operator does these by hand when next starting the stack; **agents never touch /srv/dakis**):
 - refresh service: add `BACKUP_DIR=/backups` env + bind mount `/srv/dakis/data/dota2tracker-backups:/backups`; rebuild refresh.
@@ -1638,7 +1638,7 @@ Add (operator does these by hand when next starting the stack; **agents never to
 - Tunnel cutover is NOT required for 3a (realm is per-request); when it lands, append `https://<domain>` to `ALLOWED_ORIGINS` and restart the api — the Secure cookie flag follows the allowlist entry automatically.
 - Once, after the first nightly backup: restore drill `pg_restore --clean --if-exists -d <scratch-db-url> <dump>`.
 
-- [ ] **Step 4: Verify + commit**
+- [x] **Step 4: Verify + commit**
 
 Run: `pnpm lint && pnpm test` one last time (full suite green), then:
 

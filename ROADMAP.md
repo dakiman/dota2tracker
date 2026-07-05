@@ -4,14 +4,13 @@
 2026-07-02; detailed implementation plan (per-phase work items, feasibility, estimates)
 in `docs/superpowers/plans/2026-07-02-roadmap-implementation-plan.md`.*
 
-**Status 2026-07-05:** Phases 1, 2, and 2.5 are **implemented and merged to main** via the
-executable plans in `docs/superpowers/plans/` (ticked plan docs double as build logs).
-**Next up: Phase 3 prerequisites (Drizzle snapshot repair, pg_dump backups) + Phase 3a
-(Steam OpenID auth + rate limiting)** — fully planned in
-`docs/superpowers/plans/2026-07-05-phase3-prereqs-and-steam-auth.md` (9 TDD tasks, ready
-to execute; tunnel cutover confirmed NOT a blocker for 3a — realm is per-request). 3b/3c
-remain their own spec → plan → implement cycles. The only Phase 1/2 remainder is the
-operator prod rollout — see the note in Phase 1 below.
+**Status 2026-07-05:** Phases 1, 2, 2.5, the **Phase 3 prerequisites** (Drizzle snapshot
+repair, nightly pg_dump backups), and **Phase 3a** (Steam OpenID auth + rate limiting) are
+**implemented and merged to main** via the executable plans in `docs/superpowers/plans/`
+(ticked plan docs double as build logs). **Next up: Phase 3b** (pipeline-as-service +
+self-service players). 3b/3c remain their own spec → plan → implement cycles. Phase 1/2
+remainder is the operator prod rollout (see the note in Phase 1); the Phase 3a operator
+rollout (auth env + backup mount) is captured in `DEPLOY.md`.
 
 This is the single source of truth for **where the product is going**. Architecture and
 commands live in `CLAUDE.md`; the code review itself (with per-finding detail) is in
@@ -33,9 +32,11 @@ answered.
 
 FriendTracker is a read-only Dota 2 stats site for a fixed friend group. `player_matches`
 (one row per player per significant match, role derived per match) is the single source of
-truth for all stats. There is **no auth** — the `players` table is hand-seeded and there's
-no rate limiting or session handling (CORS middleware is gone; the API is same-origin
-behind nginx/Vite proxies). Data refresh is **automated**: a `refresh` sidecar container
+truth for all stats. **Steam OpenID auth exists as of Phase 3a** (`users`/`sessions`,
+httpOnly session cookie, hand-rolled OpenID verify, fixed-window rate limiting) but
+**protects nothing yet** — the `players` table is still hand-seeded and every read stays
+public; auth is infrastructure for 3b/3c. CORS middleware is gone; the API is same-origin
+behind nginx/Vite proxies. Data refresh is **automated**: a `refresh` sidecar container
 runs the pipeline on a cron (6 h match sync, daily build fetch), every job logs to
 `refresh_runs`, and the web footer shows data age. Manual runs still work
 (`pnpm fetch-data` etc., all routed through `scripts/run-job.ts`).
@@ -145,20 +146,22 @@ its actual users now.
 ## Phase 3 — Accounts / Leagues (the product arc) — ~2–3 weeks part-time
 
 Turn the hand-seeded friend tracker into a real multi-user site. Greenfield.
-**Prerequisites** *(added)*: Phase 2 done; nightly `pg_dump` backups (see standing
-tasks); realistically the **Cloudflare tunnel cutover** — accounts on a LAN-only site
-serve nobody, and public exposure is what makes rate limiting mandatory.
+**Prerequisites — ✅ DONE 2026-07-05** (`docs/superpowers/plans/2026-07-05-phase3-prereqs-and-steam-auth.md`):
+Drizzle snapshot repair (generation restored) + nightly `pg_dump` backups (7-day rotation,
+logged to `refresh_runs`). Still recommended before public exposure: the **Cloudflare
+tunnel cutover** — but confirmed NOT a blocker for 3a (OpenID realm is per-request, so LAN
+works today; the Secure cookie flag follows the `ALLOWED_ORIGINS` entry once a domain lands).
 
 Decomposed into sub-projects, each its own spec → plan → implement cycle:
 
-- **3a — Auth: Steam OpenID only** *(decided, was open question 2)* — `users` +
-  `sessions` tables, httpOnly cookie, hand-rolled OpenID 2.0 verify (~100 lines; no
-  Steam API key needed — profile data via OpenDota). Login links a user to their own
-  `players` row via steam64→account-ID. No email/password (audience is Steam users by
-  definition); schema keeps a provider discriminator so one could be added later.
-  Rate limiting + auth middleware land here. OpenID redirects are browser-side, so the
-  LAN origin works today; verify the multi-origin story (LAN/Tailscale/public) with an
-  early spike.
+- **3a — Auth: Steam OpenID only** — ✅ **DONE 2026-07-05** — `users` + `sessions` tables
+  (generated migration 0007), httpOnly cookie storing only the sha256 of the opaque token,
+  hand-rolled OpenID 2.0 verify (no deps, no Steam API key — profile via OpenDota). Login
+  links a user to their `players` row via steam64→account-ID; schema keeps a provider
+  discriminator. Rate limiting (hand-rolled fixed-window) + session middleware + a minimal
+  header sign-in/out landed here. Multi-origin solved via the `ALLOWED_ORIGINS` allowlist
+  (scheme per entry, tunnel-safe); the outbound OpenID redirect was spiked live against real
+  Steam. **Auth deliberately protects nothing yet** — infrastructure for 3b/3c.
 - **3b — Pipeline-as-service + self-service players** — finish the pipeline-as-library
   refactor (→ `packages/pipeline`); minimal job runner (`jobs` table + in-process
   poller — this scale never needs Redis); `POST /api/players` validates the account
@@ -191,16 +194,13 @@ From `fable-review.md` §3/§7:
 
 ## Standing tasks (not phase-gated)
 
-- **Drizzle snapshots out of sync** *(planned: Task 1 of the 2026-07-05 plan doc)* —
-  migrations 0001–0005 were hand-written with manual `_journal.json` entries and no
-  `meta/` snapshots, so `pnpm --filter api db:generate` diffs against the stale 0000
-  snapshot and prompts interactively. Until snapshots are regenerated, **hand-write new
-  migrations** (follow the 0004/0005 convention: `IF NOT EXISTS`-style idempotent SQL +
-  a journal entry). Fix properly before Phase 3's schema work (`users`, `sessions`,
-  `leagues` tables) — that phase generates too many migrations to hand-write.
-- **Backups** *(planned: Task 2 of the 2026-07-05 plan doc)* — nightly `pg_dump` to `/srv/dakis/data/dota2tracker-backups/`,
-  7-day rotation; trivial once the Phase 1 refresh container exists; **mandatory before
-  Phase 3** (user-generated data).
+- ~~**Drizzle snapshots out of sync**~~ — ✅ **DONE 2026-07-05** — `meta/0006_snapshot.json`
+  (schema as of migration 0006) installed, so `db:generate` diffs against the real state.
+  Generation is restored; the hand-write-migrations convention is retired. Migration 0007
+  (`users`/`sessions`) was the first generated migration and proved the fix.
+- ~~**Backups**~~ — ✅ **DONE 2026-07-05** — nightly `pg_dump --format=custom` (`backup-db`
+  job via `scripts/run-job.ts`, cron 04:10 in the refresh container), 7-day rotation, each
+  run logged to `refresh_runs`. Operator wires the bind mount + rebuild — see `DEPLOY.md`.
 - **Talent left/right spot-check** — `fetch-player-builds.ts` assumes OpenDota's
   `hero_abilities.talents` array is `[left, right]` matching the in-game tree. One
   manual session against the client; if reversed, fix is a single array swap.

@@ -47,6 +47,12 @@ pnpm --filter api db:migrate    # apply migrations
 pnpm --filter api db:studio     # open Drizzle Studio
 ```
 
+Migrations are **generated again** — `db:generate` works (`meta/0006_snapshot.json`
+captures the schema as of migration 0006, so drizzle-kit diffs against the real state).
+Add tables to `schema.ts`, run `db:generate`, and commit the generated `0007+_*.sql` +
+`meta/` snapshot. The old "hand-write migrations, snapshots are out of sync" warning is
+obsolete.
+
 ### Docker
 ```bash
 docker compose up --build       # full stack (api + web + postgres)
@@ -59,6 +65,13 @@ Copy `.env.example` to `.env`. Key variables:
 - `PORT` — API port (default 3000)
 - `VITE_API_URL` — used by Vite proxy; in dev defaults to `http://localhost:3000`
 - `SITE_NAME` — optional, controls the site title returned by `/api/config`
+- `ALLOWED_ORIGINS` — comma-separated full origins (`scheme://host[:port]`) allowed to
+  initiate Steam login; the scheme comes from the entry (tunnel-safe). Default
+  `http://localhost:5173,http://localhost:3000`. An unknown `Host` → 403 on auth routes.
+- `OPENDOTA_URL` — OpenDota base URL for the login profile fetch (default
+  `https://api.opendota.com/api`; tests point it at a mock)
+- `BACKUP_DIR` / `BACKUP_KEEP_DAYS` — nightly `pg_dump` job output dir (default `/backups`)
+  and rotation window (default `7`); used inside the refresh container
 
 ## Architecture
 
@@ -74,12 +87,23 @@ Copy `.env.example` to `.env`. Key variables:
   derived role); PK `(player_id, match_id)`; source of truth for all stats
 - `heroes` — OpenDota hero lookup (`id`, `name`, `slug`), refreshed by fetch-data
 - `hero_builds` — curated build data (items, skills, talents); unique on `(hero_slug, role, player_id)`; `player_id` can be NULL for global/default builds
+- `users` — authenticated site users (Steam OpenID); unique on `(provider, steam_id)`; optional FK to `players` (steam64→account-id link)
+- `sessions` — session rows keyed by the **sha256 hex of the opaque cookie token** (never the raw token); FK→users ON DELETE CASCADE; sliding 30-day expiry
 
 ### API routes (`apps/api/src/routes/`)
 - `GET /api/config` — returns player list and site name
 - `GET /api/meta?players=id1,id2&role=carry` — aggregated hero stats for meta page
 - `GET /api/heroes/:heroSlug?players=id1,id2` — hero detail with build data; merges player-specific stats if `players` provided
+- `GET /api/auth/me` — current user (`{ user: AuthUser | null }`, always 200)
+- `POST /api/auth/logout` — clears the session + cookie
+- `GET /api/auth/steam/login` — 302 to Steam OpenID (realm/return_to per request origin)
+- `GET /api/auth/steam/return` — verifies the OpenID assertion, upserts the user, sets the session cookie
 - `GET /api/health` — health check
+
+Auth is hand-rolled (no deps) in `apps/api/src/auth/` (openid, session, origin, profile) +
+`middleware/` (session, rate-limit). Rate limits: `/api/auth/*` 10/min/IP, `/api/*`
+300/min/IP (keyed by `X-Real-IP` from nginx). Auth protects nothing yet — it is
+infrastructure for later phases.
 
 ### Frontend (`apps/web/src/`)
 - **Router**: `HomePage` → `MetaPage` → `HeroDetailPage` (via `/hero/:slug`)

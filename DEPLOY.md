@@ -20,6 +20,26 @@ The API runs Drizzle migrations automatically on startup, so no manual migration
 
 Health check: `curl -s http://localhost:8743/api/health`
 
+## Phase 3a rollout (operator, by hand — agents never touch `/srv/dakis`)
+
+Do these once when next starting the stack on the server:
+
+- **refresh service** — add `BACKUP_DIR=/backups` to its env and a bind mount
+  `/srv/dakis/data/dota2tracker-backups:/backups`; rebuild refresh. First backup runs at
+  04:10 UTC (or trigger manually: `... exec refresh ./node_modules/.bin/tsx scripts/run-job.ts backup-db`).
+- **api service** — add `ALLOWED_ORIGINS=http://192.168.100.81:8743` to its env (append
+  Tailscale / public origins as they come to exist, comma-separated); rebuild api + web.
+  Migration 0007 (`users`/`sessions`) auto-applies on start.
+- **Do not publish the API port publicly** — the rate limiter trusts `X-Real-IP` from
+  nginx; exposing the API directly makes the key spoofable. Keep API access behind the
+  web/nginx container only.
+- **Tunnel cutover is NOT required for 3a** (realm is per-request). When it lands, append
+  `https://<domain>` to `ALLOWED_ORIGINS` and restart the api — the Secure cookie flag
+  follows the allowlist entry's scheme automatically.
+- **Restore drill** (once, after the first nightly backup): copy a dump out and verify
+  `pg_restore --clean --if-exists -d <scratch-db-url> <dump>` against a throwaway DB. Never
+  restore into the live `friendtracker` DB as a test.
+
 ## Data pipeline (run after first deploy or to refresh stats)
 
 **Refresh is scheduled** — the `dota2tracker-refresh` container syncs matches every
