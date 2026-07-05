@@ -4,10 +4,14 @@
 2026-07-02; detailed implementation plan (per-phase work items, feasibility, estimates)
 in `docs/superpowers/plans/2026-07-02-roadmap-implementation-plan.md`.*
 
-**Status 2026-07-02 (post-implementation):** Phases 1 and 2 are **implemented and merged
-to main** (`5403587`) via the executable plans in `docs/superpowers/plans/` (both plan docs
-have their checkboxes ticked and double as build logs). **Next up: Phase 3 — prerequisites first (backups, Drizzle snapshots, tunnel cutover).** The only
-Phase 1/2 remainder is the operator prod rollout — see the note in Phase 1 below.
+**Status 2026-07-05:** Phases 1, 2, and 2.5 are **implemented and merged to main** via the
+executable plans in `docs/superpowers/plans/` (ticked plan docs double as build logs).
+**Next up: Phase 3 prerequisites (Drizzle snapshot repair, pg_dump backups) + Phase 3a
+(Steam OpenID auth + rate limiting)** — fully planned in
+`docs/superpowers/plans/2026-07-05-phase3-prereqs-and-steam-auth.md` (9 TDD tasks, ready
+to execute; tunnel cutover confirmed NOT a blocker for 3a — realm is per-request). 3b/3c
+remain their own spec → plan → implement cycles. The only Phase 1/2 remainder is the
+operator prod rollout — see the note in Phase 1 below.
 
 This is the single source of truth for **where the product is going**. Architecture and
 commands live in `CLAUDE.md`; the code review itself (with per-finding detail) is in
@@ -187,14 +191,14 @@ From `fable-review.md` §3/§7:
 
 ## Standing tasks (not phase-gated)
 
-- **Drizzle snapshots out of sync** *(added 2026-07-02, hit twice during Phase 1/2)* —
+- **Drizzle snapshots out of sync** *(planned: Task 1 of the 2026-07-05 plan doc)* —
   migrations 0001–0005 were hand-written with manual `_journal.json` entries and no
   `meta/` snapshots, so `pnpm --filter api db:generate` diffs against the stale 0000
   snapshot and prompts interactively. Until snapshots are regenerated, **hand-write new
   migrations** (follow the 0004/0005 convention: `IF NOT EXISTS`-style idempotent SQL +
   a journal entry). Fix properly before Phase 3's schema work (`users`, `sessions`,
   `leagues` tables) — that phase generates too many migrations to hand-write.
-- **Backups** *(added)* — nightly `pg_dump` to `/srv/dakis/data/dota2tracker-backups/`,
+- **Backups** *(planned: Task 2 of the 2026-07-05 plan doc)* — nightly `pg_dump` to `/srv/dakis/data/dota2tracker-backups/`,
   7-day rotation; trivial once the Phase 1 refresh container exists; **mandatory before
   Phase 3** (user-generated data).
 - **Talent left/right spot-check** — `fetch-player-builds.ts` assumes OpenDota's
