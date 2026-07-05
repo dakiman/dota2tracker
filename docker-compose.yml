@@ -38,6 +38,9 @@ services:
       dockerfile: infra/refresh/Dockerfile
     environment:
       DATABASE_URL: postgresql://friendtracker:${DB_PASSWORD:-devpassword}@db:5432/friendtracker
+      BACKUP_DIR: /backups
+    volumes:
+      - backups:/backups
     depends_on:
       db:
         condition: service_healthy
@@ -54,3 +57,4 @@ services:
 
 volumes:
   pgdata:
+  backups:

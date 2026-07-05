@@ -3,3 +3,5 @@
 20 */6 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts fetch-data > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts populate-builds > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts request-parses > /proc/1/fd/1 2>&1
 # Slow build fetchers: daily, off-peak. ~300-500 OpenDota calls.
 40 3 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts fetch-hero-builds > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts fetch-player-builds > /proc/1/fd/1 2>&1
+# Nightly DB backup to $BACKUP_DIR (custom-format dump, 7-day rotation).
+10 4 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts backup-db > /proc/1/fd/1 2>&1
