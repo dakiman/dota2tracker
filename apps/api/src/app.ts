@@ -4,9 +4,14 @@ import meta from './routes/meta.js'
 import heroes from './routes/heroes.js'
 import matches from './routes/matches.js'
 import together from './routes/together.js'
+import auth from './routes/auth.js'
+import { sessionMiddleware, type AuthEnv } from './middleware/session.js'
 
-export const app = new Hono()
+export const app = new Hono<AuthEnv>()
 
+app.use('/api/*', sessionMiddleware)
+
+app.route('/api/auth', auth)
 app.route('/api/config', config)
 app.route('/api/meta', meta)
 app.route('/api/heroes', heroes)

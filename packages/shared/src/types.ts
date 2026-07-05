@@ -204,3 +204,12 @@ export interface TogetherResponse {
   duos: DuoStat[]
   players: TogetherPlayerStat[]
 }
+
+/** Authenticated user as returned by GET /api/auth/me */
+export interface AuthUser {
+  id: number
+  steamId: string
+  playerId: string | null
+  name: string
+  avatar: string | null
+}
