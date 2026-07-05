@@ -3,10 +3,15 @@ import { onMounted } from 'vue'
 import { RouterView } from 'vue-router'
 import NavBar from '@/components/layout/NavBar.vue'
 import { useConfigStore } from '@/stores/config'
+import { useAuthStore } from '@/stores/auth'
 import { relativeTime } from '@/utils/relativeTime'
 
 const config = useConfigStore()
-onMounted(config.load)
+const auth = useAuthStore()
+onMounted(() => {
+  config.load()
+  auth.load()
+})
 </script>
 
 <template>

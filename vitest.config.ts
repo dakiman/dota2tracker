@@ -1,6 +1,12 @@
 import { defineConfig } from 'vitest/config'
+import { resolve } from 'node:path'
 
 export default defineConfig({
+  resolve: {
+    // The web stores import via the '@' alias (see apps/web/vite.config.ts);
+    // mirror it here so store unit tests resolve '@/composables/*'.
+    alias: { '@': resolve(__dirname, 'apps/web/src') },
+  },
   test: {
     include: ['tests/**/*.test.ts'],
     // Route tests share one throwaway DB; keep files sequential.
