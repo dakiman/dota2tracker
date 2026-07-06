@@ -677,7 +677,7 @@ The queue table (generated migration 0008) with the pending-dedup partial unique
 - Consumes: `registry` (Task 2).
 - Produces (consumed by Tasks 4, 9, 10, 11): table `jobs` (`id serial PK`, `type text NOT NULL`, `payload jsonb NULL` typed `JobPayload`, `status text NOT NULL DEFAULT 'pending'`, `error text NULL`, `created_at timestamptz NOT NULL DEFAULT now()`, `started_at`/`finished_at timestamptz NULL`, partial unique `jobs_pending_dedup_idx`); Drizzle object `jobs` exported from `@friendtracker/db`; `enqueue(items: Array<{ type: string; payload?: JobPayload }>): Promise<number>` from `@friendtracker/pipeline` (returns rows actually inserted; throws on a type not in the registry).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/jobs-queue.test.ts`:
 
@@ -731,12 +731,12 @@ describe('jobs schema + enqueue', () => {
 
 Note: `'fetch-player'` only enters the registry in Task 5 — see Step 4 for how this test goes green now.
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/jobs-queue.test.ts`
 Expected: FAIL — `jobs` is not exported from `@friendtracker/db`.
 
-- [ ] **Step 3: Add the table and generate migration 0008**
+- [x] **Step 3: Add the table and generate migration 0008**
 
 Append to `packages/db/src/schema.ts` (add `import type` nothing — `sql` is already imported):
 
@@ -783,7 +783,7 @@ CREATE UNIQUE INDEX "jobs_pending_dedup_idx" ON "jobs" USING btree ("type",coale
 
 If drizzle-kit mangles the expression, hand-edit the generated SQL file to exactly that statement (snapshot stays as generated — it records the same index definition). **Any `ALTER` touching existing tables → STOP and report.**
 
-- [ ] **Step 4: Implement `enqueue`**
+- [x] **Step 4: Implement `enqueue`**
 
 Create `packages/pipeline/src/queue.ts`:
 
@@ -843,12 +843,12 @@ export type { JobPayload }
   },
 ```
 
-- [ ] **Step 5: Run the test to verify it passes**
+- [x] **Step 5: Run the test to verify it passes**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/jobs-queue.test.ts`
 Expected: PASS (5 tests — global-setup applies migration 0008). Then `pnpm test && pnpm lint` — all green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/db/src/schema.ts packages/db/migrations packages/pipeline/src/queue.ts packages/pipeline/src/registry.ts packages/pipeline/src/index.ts tests/jobs-queue.test.ts

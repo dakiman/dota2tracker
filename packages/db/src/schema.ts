@@ -125,3 +125,30 @@ export const sessions = pgTable(
   },
   (t) => [index('sessions_expires_idx').on(t.expiresAt)]
 )
+
+/** Payload for queued jobs; only fetch-player uses it today. Lives here
+ *  (not in the pipeline package) so the schema stays dependency-free. */
+export type JobPayload = { playerId?: string }
+
+/** Job queue drained serially by the API's in-process poller. Queue state
+ *  only — execution history lives in refresh_runs. Rows are disposable. */
+export const jobs = pgTable(
+  'jobs',
+  {
+    id: serial('id').primaryKey(),
+    type: text('type').notNull(),
+    payload: jsonb('payload').$type<JobPayload>(),
+    status: text('status').notNull().default('pending'),
+    error: text('error'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    startedAt: timestamp('started_at', { withTimezone: true }),
+    finishedAt: timestamp('finished_at', { withTimezone: true }),
+  },
+  (t) => [
+    // Dedup: at most one PENDING job per (type, target player). Enqueue is
+    // INSERT ... ON CONFLICT DO NOTHING, so duplicates are silent no-ops.
+    uniqueIndex('jobs_pending_dedup_idx')
+      .on(t.type, sql`coalesce(${t.payload}->>'playerId', '')`)
+      .where(sql`${t.status} = 'pending'`),
+  ]
+)
