@@ -28,5 +28,10 @@ export const useConfigStore = defineStore('config', () => {
     return loadPromise
   }
 
-  return { siteName, players, lastRefreshed, load }
+  async function refresh() {
+    loadPromise = null
+    return load()
+  }
+
+  return { siteName, players, lastRefreshed, load, refresh }
 })

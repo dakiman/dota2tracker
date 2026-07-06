@@ -30,5 +30,10 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  return { user, load, logout }
+  async function refresh() {
+    loadPromise = null
+    return load()
+  }
+
+  return { user, load, logout, refresh }
 })

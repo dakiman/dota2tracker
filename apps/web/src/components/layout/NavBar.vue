@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { RouterLink } from 'vue-router'
 import PlayerFilterDropdown from './PlayerFilterDropdown.vue'
+import AccountActions from './AccountActions.vue'
 import { useConfigStore } from '@/stores/config'
 import { useAuthStore } from '@/stores/auth'
 
@@ -48,6 +49,7 @@ const auth = useAuthStore()
           class="w-6 h-6 rounded-full"
         />
         <span class="text-sm" style="color: var(--color-dota-text);">{{ auth.user.name }}</span>
+        <AccountActions />
         <button
           class="opacity-80 hover:opacity-100 transition text-sm cursor-pointer"
           style="color: var(--color-dota-text-dim);"

@@ -2454,7 +2454,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: `POST /api/players` (Task 10), `POST /api/admin/refresh` (Task 11), `AuthUser.isAdmin` (Task 7).
 - Produces: `apiPost<T>(path: string, body?: unknown): Promise<T>` and `ApiError.data?: unknown` from `composables/useApi`; `refresh(): Promise<void>` on both the auth and config stores.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Append to `tests/use-api.test.ts` (add `apiPost` to the existing import):
 
@@ -2504,12 +2504,12 @@ Append to `tests/auth-store.test.ts`:
   })
 ```
 
-- [ ] **Step 2: Run them to verify they fail**
+- [x] **Step 2: Run them to verify they fail**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/use-api.test.ts tests/auth-store.test.ts`
 Expected: FAIL — `apiPost` is not exported; `auth.refresh` is not a function.
 
-- [ ] **Step 3: Implement composable + stores**
+- [x] **Step 3: Implement composable + stores**
 
 In `apps/web/src/composables/useApi.ts`: extend `ApiError` with a third constructor param and add `apiPost`:
 
@@ -2582,12 +2582,12 @@ In `apps/web/src/stores/config.ts`: identical `refresh()` addition:
   return { siteName, players, lastRefreshed, load, refresh }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/use-api.test.ts tests/auth-store.test.ts`
 Expected: PASS.
 
-- [ ] **Step 5: The AccountActions component**
+- [x] **Step 5: The AccountActions component**
 
 Create `apps/web/src/components/layout/AccountActions.vue`:
 
@@ -2726,12 +2726,12 @@ import AccountActions from './AccountActions.vue'
 
 and inside the signed-in `<div v-else class="flex items-center gap-2">`, insert `<AccountActions />` immediately before the Log out button.
 
-- [ ] **Step 6: Type-check the web app and run the suite**
+- [x] **Step 6: Type-check the web app and run the suite**
 
 Run: `pnpm --filter web lint && pnpm test`
 Expected: green.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/composables/useApi.ts apps/web/src/stores/auth.ts apps/web/src/stores/config.ts apps/web/src/components/layout/AccountActions.vue apps/web/src/components/layout/NavBar.vue tests/use-api.test.ts tests/auth-store.test.ts

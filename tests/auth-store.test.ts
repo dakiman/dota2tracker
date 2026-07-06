@@ -49,4 +49,13 @@ describe('auth store', () => {
     expect(auth.user).toBeNull()
     expect(vi.mocked(fetch).mock.calls[0][1]).toMatchObject({ method: 'POST' })
   })
+
+  it('refresh() drops the memo and refetches', async () => {
+    const spy = vi.fn(async () => new Response(JSON.stringify({ user: null }), { status: 200 }))
+    vi.stubGlobal('fetch', spy)
+    const auth = useAuthStore()
+    await auth.load()
+    await auth.refresh()
+    expect(spy).toHaveBeenCalledTimes(2)
+  })
 })
