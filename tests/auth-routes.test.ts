@@ -107,7 +107,7 @@ describe('POST /api/auth/logout', () => {
     const { token } = await createSession(user.id)
     const res = await app.request('/api/auth/logout', {
       method: 'POST',
-      headers: { cookie: `session=${token}`, 'x-real-ip': '10.5.0.5' },
+      headers: { cookie: `session=${token}`, 'x-real-ip': '10.5.0.5', origin: 'http://localhost:5173' },
     })
     expect(res.status).toBe(200)
     expect(await res.json()).toEqual({ ok: true })
@@ -118,7 +118,7 @@ describe('POST /api/auth/logout', () => {
   it('is a no-op without a cookie', async () => {
     const res = await app.request('/api/auth/logout', {
       method: 'POST',
-      headers: { 'x-real-ip': '10.5.0.6' },
+      headers: { 'x-real-ip': '10.5.0.6', origin: 'http://localhost:5173' },
     })
     expect(res.status).toBe(200)
   })

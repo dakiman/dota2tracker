@@ -1749,7 +1749,7 @@ Origin-allowlist check on mutating methods under `/api/*`, layered over the Same
 - Consumes: `allowedOrigins()` (3a, `auth/origin.js`).
 - Produces (consumed by Tasks 10–11 implicitly via app wiring): `csrfMiddleware` from `middleware/csrf.js`, mounted on `/api/*` between the rate limiters and the session middleware.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/csrf.test.ts`:
 
@@ -1794,12 +1794,12 @@ describe('csrf origin check', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/csrf.test.ts`
 Expected: the two 403 tests FAIL (logout currently returns 200 without an Origin).
 
-- [ ] **Step 3: Implement and wire**
+- [x] **Step 3: Implement and wire**
 
 Create `apps/api/src/middleware/csrf.ts`:
 
@@ -1834,7 +1834,7 @@ app.use('/api/*', csrfMiddleware)
 app.use('/api/*', sessionMiddleware)
 ```
 
-- [ ] **Step 4: Add Origin to the existing logout tests**
+- [x] **Step 4: Add Origin to the existing logout tests**
 
 In `tests/auth-routes.test.ts`, both `POST /api/auth/logout` tests add the header:
 
@@ -1848,12 +1848,12 @@ and
       headers: { 'x-real-ip': '10.5.0.6', origin: 'http://localhost:5173' },
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/csrf.test.ts tests/auth-routes.test.ts`
 Expected: PASS. Then `pnpm test && pnpm lint` — all green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/middleware/csrf.ts apps/api/src/app.ts tests/csrf.test.ts tests/auth-routes.test.ts
