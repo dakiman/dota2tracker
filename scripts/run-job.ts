@@ -1,12 +1,11 @@
 /**
- * Single CLI entrypoint for all pipeline jobs. Wraps each job with a
- * refresh_runs row (started/finished/ok/detail) so scheduled runs are
- * observable. Usage: tsx scripts/run-job.ts <job-name>
+ * Single CLI entrypoint for direct (non-queued) job runs: manual dev runs
+ * and the refresh container's backup-db cron line. Queued execution goes
+ * through the API poller instead. Usage: tsx scripts/run-job.ts <job-name>
  */
 import 'dotenv/config'
-import { eq } from 'drizzle-orm'
-import { db, pool, refreshRuns } from '@friendtracker/db'
-import { registry, type JobFn } from '@friendtracker/pipeline'
+import { pool } from '@friendtracker/db'
+import { registry, withRunLog, type JobFn } from '@friendtracker/pipeline'
 
 const JOBS: Record<string, JobFn> = {
   ...registry,
@@ -21,29 +20,14 @@ async function main() {
     process.exit(2)
   }
 
-  const [row] = await db
-    .insert(refreshRuns)
-    .values({ job: name })
-    .returning({ id: refreshRuns.id })
-
-  try {
-    const summary = await job(null)
-    await db
-      .update(refreshRuns)
-      .set({ finishedAt: new Date(), ok: true, detail: { summary } })
-      .where(eq(refreshRuns.id, row.id))
-    console.log(`[run-job] ${name} ok: ${summary}`)
-  } catch (e) {
-    const error = e instanceof Error ? e.message : String(e)
-    await db
-      .update(refreshRuns)
-      .set({ finishedAt: new Date(), ok: false, detail: { error } })
-      .where(eq(refreshRuns.id, row.id))
-    console.error(`[run-job] ${name} FAILED: ${error}`)
+  const result = await withRunLog(name, () => job(null))
+  if (result.ok) {
+    console.log(`[run-job] ${name} ok: ${result.summary}`)
+  } else {
+    console.error(`[run-job] ${name} FAILED: ${result.error}`)
     process.exitCode = 1
-  } finally {
-    await pool.end()
   }
+  await pool.end()
 }
 
 main().catch((e) => {

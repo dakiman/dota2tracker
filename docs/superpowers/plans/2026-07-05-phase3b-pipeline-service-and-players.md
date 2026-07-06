@@ -872,7 +872,7 @@ The refresh_runs bracket is extracted from `run-job.ts` into the pipeline packag
 - Consumes: `jobs` table + `enqueue` (Task 3), `registry` (Task 2).
 - Produces (consumed by Tasks 6, 9): from `@friendtracker/pipeline`: `withRunLog(name: string, fn: () => Promise<string>): Promise<RunResult>` where `type RunResult = { ok: true; summary: string } | { ok: false; error: string }` (never throws); `runPendingJobs(reg?: Record<string, JobFn>): Promise<number>` (drains the queue, returns jobs processed; `reg` injectable for tests); `recoverOrphanedJobs(): Promise<number>`; `pruneOldJobs(): Promise<number>`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/jobs-runner.test.ts`:
 
@@ -997,12 +997,12 @@ describe('recovery + pruning', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/jobs-runner.test.ts`
 Expected: FAIL — `runPendingJobs` not exported from `@friendtracker/pipeline`.
 
-- [ ] **Step 3: Implement run-log and runner**
+- [x] **Step 3: Implement run-log and runner**
 
 Create `packages/pipeline/src/run-log.ts`:
 
@@ -1111,7 +1111,7 @@ export { withRunLog, type RunResult } from './run-log.js'
 export { runPendingJobs, recoverOrphanedJobs, pruneOldJobs } from './runner.js'
 ```
 
-- [ ] **Step 4: Rewire run-job.ts onto withRunLog**
+- [x] **Step 4: Rewire run-job.ts onto withRunLog**
 
 Replace `main()` (and drop the now-unused `eq`/`refreshRuns` imports) in `scripts/run-job.ts` — full new file:
 
@@ -1154,12 +1154,12 @@ main().catch((e) => {
 })
 ```
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/jobs-runner.test.ts`
 Expected: PASS (7 tests). Then `pnpm test && pnpm lint` — all green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/pipeline/src/run-log.ts packages/pipeline/src/runner.ts packages/pipeline/src/index.ts scripts/run-job.ts tests/jobs-runner.test.ts
