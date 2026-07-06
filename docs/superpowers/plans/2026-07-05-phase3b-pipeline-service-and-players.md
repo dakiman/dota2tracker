@@ -1977,7 +1977,7 @@ The self-service endpoint. Self-add derives the account from the session's steam
 - Consumes: `requireAuth` (Task 7), `csrfMiddleware` wiring (Task 8), `enqueue` + `'fetch-player'` (Tasks 3/5), `steam64ToAccountId`/`STEAM64_BASE` (3a `auth/openid.js`), `rateLimit` (3a).
 - Produces (consumed by Task 12): `POST /api/players` with body `{ accountId?: string }` → 201 `{ player }` / 400 `{ error: 'invalid_account_id' }` / 403 `{ error: 'forbidden' }` / 404 `{ error: 'account_not_found' }` / 409 `{ error: 'already_tracked' }` / 422 `{ error: 'no_public_data', name, avatar }` / 503 `{ error: 'opendota_unavailable' }`; `checkAccount(accountId: string): Promise<AccountCheck>` where `type AccountCheck = 'not_found' | 'unavailable' | { name: string; avatar: string | null; hasMatches: boolean }`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/players-route.test.ts`:
 
@@ -2145,12 +2145,12 @@ describe('POST /api/players', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/players-route.test.ts`
 Expected: FAIL — 404s (route doesn't exist).
 
-- [ ] **Step 3: Implement validation + route + wiring**
+- [x] **Step 3: Implement validation + route + wiring**
 
 Create `apps/api/src/players/validate.ts`:
 
@@ -2271,12 +2271,12 @@ app.use('/api/players', rateLimit({ windowMs: 60_000, max: 10 }))
 app.route('/api/players', playersRoute)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/players-route.test.ts`
 Expected: PASS (9 tests). Then `pnpm test && pnpm lint` — all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/players/validate.ts apps/api/src/routes/players.ts apps/api/src/app.ts tests/players-route.test.ts
