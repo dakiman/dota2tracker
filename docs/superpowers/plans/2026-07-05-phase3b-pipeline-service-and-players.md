@@ -1183,7 +1183,7 @@ Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 - Consumes: `syncHeroes`/`syncPlayerMatches` (Task 2), `registry` (Task 2/3).
 - Produces (consumed by Tasks 9, 10): registry entries `'fetch-player'` (real implementation, replaces the Task 3 stub) and `'refresh-profiles'`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/jobs-pipeline.test.ts`:
 
@@ -1271,12 +1271,12 @@ describe('refresh-profiles', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/jobs-pipeline.test.ts`
 Expected: FAIL — the Task 3 `fetch-player` stub throws `not implemented yet`, and `refresh-profiles` is not in the registry.
 
-- [ ] **Step 3: Implement the two jobs and register them**
+- [x] **Step 3: Implement the two jobs and register them**
 
 Create `packages/pipeline/src/jobs/fetch-player.ts`:
 
@@ -1350,7 +1350,7 @@ import { run as refreshProfiles } from './jobs/refresh-profiles.js'
   'refresh-profiles': () => refreshProfiles(),
 ```
 
-- [ ] **Step 4: Widen the parse window**
+- [x] **Step 4: Widen the parse window**
 
 In `packages/pipeline/src/jobs/request-parses.ts`:
 
@@ -1358,12 +1358,12 @@ In `packages/pipeline/src/jobs/request-parses.ts`:
 - `interval '14 days'` → `interval '30 days'`
 - Update the header comment's second sentence to: `Only the last 30 days are eligible — replays typically expire after ~2 weeks, but stragglers survive longer and failed requests are cheap and logged. Capped per run to stay polite on the free tier.`
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/jobs-pipeline.test.ts`
 Expected: PASS (4 tests). Then `pnpm test && pnpm lint` — all green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/pipeline/src/jobs/fetch-player.ts packages/pipeline/src/jobs/refresh-profiles.ts packages/pipeline/src/registry.ts packages/pipeline/src/jobs/request-parses.ts tests/jobs-pipeline.test.ts
