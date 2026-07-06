@@ -54,6 +54,9 @@ importers:
       '@friendtracker/db':
         specifier: workspace:*
         version: link:../../packages/db
+      '@friendtracker/pipeline':
+        specifier: workspace:*
+        version: link:../../packages/pipeline
       '@friendtracker/shared':
         specifier: workspace:*
         version: link:../../packages/shared

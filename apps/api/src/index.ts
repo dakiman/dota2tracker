@@ -2,6 +2,7 @@ import { serve } from '@hono/node-server'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
 import { db, pool, MIGRATIONS_DIR } from '@friendtracker/db'
 import { app } from './app.js'
+import { startPoller, stopPoller } from './jobs/poller.js'
 
 try {
   console.log('Running DB migrations...')
@@ -17,13 +18,17 @@ const server = serve({ fetch: app.fetch, port }, (info) => {
   console.log(`API listening on http://localhost:${info.port}`)
 })
 
+await startPoller()
+
 let shuttingDown = false
 function shutdown(signal: string) {
   if (shuttingDown) return
   shuttingDown = true
   console.log(`${signal} received, shutting down...`)
   server.close((err) => {
-    void pool.end().finally(() => process.exit(err ? 1 : 0))
+    void stopPoller()
+      .then(() => pool.end())
+      .finally(() => process.exit(err ? 1 : 0))
   })
   // In-flight keep-alive connections can hold close() open — don't wait forever.
   setTimeout(() => process.exit(1), 10_000).unref()

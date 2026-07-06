@@ -1386,7 +1386,7 @@ Thin timer wrapper around Task 4's runner: recover + prune at boot, tick every 5
 - Consumes: `runPendingJobs`/`recoverOrphanedJobs`/`pruneOldJobs` (Task 4).
 - Produces: `startPoller(): Promise<void>`, `stopPoller(): Promise<void>` from `apps/api/src/jobs/poller.js` (bootstrap-only; nothing else imports it).
 
-- [ ] **Step 1: Add the pipeline dependency to the API**
+- [x] **Step 1: Add the pipeline dependency to the API**
 
 `apps/api/package.json` — add to dependencies:
 
@@ -1396,7 +1396,7 @@ Thin timer wrapper around Task 4's runner: recover + prune at boot, tick every 5
 
 Then `pnpm install`.
 
-- [ ] **Step 2: Implement the poller**
+- [x] **Step 2: Implement the poller**
 
 Create `apps/api/src/jobs/poller.ts`:
 
@@ -1455,7 +1455,7 @@ export async function stopPoller(): Promise<void> {
 }
 ```
 
-- [ ] **Step 3: Wire bootstrap and shutdown**
+- [x] **Step 3: Wire bootstrap and shutdown**
 
 In `apps/api/src/index.ts`: add the import, start the poller after `serve(...)`, and stop it before `pool.end()` in shutdown. Full new file:
 
@@ -1499,12 +1499,12 @@ process.on('SIGTERM', () => shutdown('SIGTERM'))
 process.on('SIGINT', () => shutdown('SIGINT'))
 ```
 
-- [ ] **Step 4: Lint + suite**
+- [x] **Step 4: Lint + suite**
 
 Run: `pnpm lint && pnpm test`
 Expected: green (tests never import `index.ts`, so no poller runs during tests).
 
-- [ ] **Step 5: Live smoke test against the dev DB**
+- [x] **Step 5: Live smoke test against the dev DB**
 
 The dev API run migrates the dev `friendtracker` DB to 0008 — intended. An unknown job type exercises claim → fail → finish without touching OpenDota:
 
@@ -1524,7 +1524,7 @@ kill %1 2>/dev/null || pkill -f 'tsx watch src/index.ts'
 sg docker -c "docker compose -p dota2tracker exec db psql -U friendtracker -c \"DELETE FROM jobs WHERE type = 'smoke-test'\""
 ```
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/api/src/jobs/poller.ts apps/api/src/index.ts apps/api/package.json pnpm-lock.yaml
