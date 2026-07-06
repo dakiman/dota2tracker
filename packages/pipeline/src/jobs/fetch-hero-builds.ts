@@ -3,14 +3,12 @@
  * and updates hero_builds rows. Preserves curated builds (e.g. Abaddon).
  * Run: pnpm fetch-hero-builds (from repo root). Requires DATABASE_URL.
  */
-import 'dotenv/config'
 import { db, heroBuilds, and, eq, isNull } from '@friendtracker/db'
 import { sql } from 'drizzle-orm'
 import type { BuildData, StatsData, ItemGroup, SituationalItem } from '@friendtracker/shared'
-import { fetchJson, sleep } from './lib/opendota.js'
-import { buildDurationStats, type DurationBucket } from './lib/duration-stats.js'
+import { fetchJson, sleep, opendotaBase } from '../lib/opendota.js'
+import { buildDurationStats, type DurationBucket } from '../lib/duration-stats.js'
 
-const OPENDOTA = 'https://api.opendota.com/api'
 const RATE_MS = 1100
 
 // --- Item constants ---
@@ -22,7 +20,7 @@ interface OpenDotaItem {
 }
 
 async function buildItemIdMap(): Promise<Map<number, string>> {
-  const items = await fetchJson<Record<string, OpenDotaItem>>(`${OPENDOTA}/constants/items`)
+  const items = await fetchJson<Record<string, OpenDotaItem>>(`${opendotaBase()}/constants/items`)
   const map = new Map<number, string>()
   for (const [slug, data] of Object.entries(items)) {
     if (slug.startsWith('recipe_')) continue
@@ -122,9 +120,9 @@ export async function run(): Promise<string> {
     }
 
     try {
-      const pop = await fetchJson<ItemPopularity>(`${OPENDOTA}/heroes/${build.heroId}/itemPopularity`)
+      const pop = await fetchJson<ItemPopularity>(`${opendotaBase()}/heroes/${build.heroId}/itemPopularity`)
       await sleep(RATE_MS)
-      const durations = await fetchJson<DurationBucket[]>(`${OPENDOTA}/heroes/${build.heroId}/durations`)
+      const durations = await fetchJson<DurationBucket[]>(`${opendotaBase()}/heroes/${build.heroId}/durations`)
       await sleep(RATE_MS)
 
       const itemBuild = buildItemData(pop, idMap)

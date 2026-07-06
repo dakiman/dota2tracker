@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildDurationStats } from '../scripts/lib/duration-stats.js'
+import { buildDurationStats } from '@friendtracker/pipeline'
 
 describe('buildDurationStats', () => {
   it('groups duration bins into brackets and computes win rate to one decimal', () => {

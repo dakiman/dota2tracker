@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { aggregateItemBuild, type ParsedMatch } from '../scripts/lib/player-aggregates.js'
+import { aggregateItemBuild, type ParsedMatch } from '@friendtracker/pipeline'
 
 const itemIdMap = new Map<number, string>([
   [1, 'blink'],

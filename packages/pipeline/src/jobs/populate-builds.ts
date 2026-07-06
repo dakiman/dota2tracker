@@ -4,7 +4,6 @@
  * only updates totalMatches and winRate for existing rows.
  * Run: pnpm populate-builds (from repo root). Requires DATABASE_URL.
  */
-import 'dotenv/config'
 import { db, playerMatches, heroes, heroBuilds, eq, isNull } from '@friendtracker/db'
 import { inArray, sql } from 'drizzle-orm'
 import type { BuildData, Role } from '@friendtracker/shared'

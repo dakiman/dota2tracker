@@ -6,22 +6,17 @@
 import 'dotenv/config'
 import { eq } from 'drizzle-orm'
 import { db, pool, refreshRuns } from '@friendtracker/db'
+import { registry, type JobFn } from '@friendtracker/pipeline'
 
-type JobModule = { run: () => Promise<string> }
-
-const JOBS: Record<string, () => Promise<JobModule>> = {
-  'fetch-data': () => import('./fetch-data.js'),
-  'populate-builds': () => import('./populate-builds.js'),
-  'fetch-hero-builds': () => import('./fetch-hero-builds.js'),
-  'fetch-player-builds': () => import('./fetch-player-builds.js'),
-  'request-parses': () => import('./request-parses.js'),
-  'backup-db': () => import('./backup-db.js'),
+const JOBS: Record<string, JobFn> = {
+  ...registry,
+  'backup-db': async () => (await import('./backup-db.js')).run(),
 }
 
 async function main() {
   const name = process.argv[2]
-  const loader = name ? JOBS[name] : undefined
-  if (!name || !loader) {
+  const job = name ? JOBS[name] : undefined
+  if (!name || !job) {
     console.error(`Usage: tsx scripts/run-job.ts <${Object.keys(JOBS).join('|')}>`)
     process.exit(2)
   }
@@ -32,8 +27,7 @@ async function main() {
     .returning({ id: refreshRuns.id })
 
   try {
-    const mod = await loader()
-    const summary = await mod.run()
+    const summary = await job(null)
     await db
       .update(refreshRuns)
       .set({ finishedAt: new Date(), ok: true, detail: { summary } })

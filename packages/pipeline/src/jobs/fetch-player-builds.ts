@@ -6,7 +6,6 @@
  *
  * Run: pnpm fetch-player-builds (from repo root). Requires DATABASE_URL + players in DB.
  */
-import 'dotenv/config'
 import { db, playerMatches, heroes, heroBuilds, players, and, eq } from '@friendtracker/db'
 import { sql } from 'drizzle-orm'
 import type {
@@ -17,14 +16,13 @@ import type {
   TalentChoice,
   MatchDurationWinRate,
 } from '@friendtracker/shared'
-import { fetchJson, sleep } from './lib/opendota.js'
+import { fetchJson, sleep, opendotaBase } from '../lib/opendota.js'
 import {
   aggregateItemBuild,
   type ParsedMatch,
   type PurchaseLogEntry,
-} from './lib/player-aggregates.js'
+} from '../lib/player-aggregates.js'
 
-const OPENDOTA = 'https://api.opendota.com/api'
 const RATE_MS = 1100
 const MIN_PARSED_MATCHES = 3
 const MATCHES_TO_FETCH = 20
@@ -87,20 +85,20 @@ let itemIdMap: Map<number, string> = new Map()
 async function loadConstants() {
   console.log('Loading OpenDota constants...')
 
-  abilityIdMap = await fetchJson<Record<string, string>>(`${OPENDOTA}/constants/ability_ids`)
+  abilityIdMap = await fetchJson<Record<string, string>>(`${opendotaBase()}/constants/ability_ids`)
   await sleep(RATE_MS)
 
   heroAbilitiesMap = await fetchJson<Record<string, HeroAbilityInfo>>(
-    `${OPENDOTA}/constants/hero_abilities`
+    `${opendotaBase()}/constants/hero_abilities`
   )
   await sleep(RATE_MS)
 
   abilitiesData = await fetchJson<Record<string, { dname?: string }>>(
-    `${OPENDOTA}/constants/abilities`
+    `${opendotaBase()}/constants/abilities`
   )
   await sleep(RATE_MS)
 
-  const items = await fetchJson<Record<string, { id: number }>>(`${OPENDOTA}/constants/items`)
+  const items = await fetchJson<Record<string, { id: number }>>(`${opendotaBase()}/constants/items`)
   for (const [slug, data] of Object.entries(items)) {
     if (data.id != null) itemIdMap.set(data.id, slug)
   }
@@ -120,7 +118,7 @@ const matchCache = new Map<number, MatchDetail>()
 
 async function getMatchDetail(matchId: number): Promise<MatchDetail> {
   if (matchCache.has(matchId)) return matchCache.get(matchId)!
-  const detail = await fetchJson<MatchDetail>(`${OPENDOTA}/matches/${matchId}`)
+  const detail = await fetchJson<MatchDetail>(`${opendotaBase()}/matches/${matchId}`)
   matchCache.set(matchId, detail)
   await sleep(RATE_MS)
   return detail
@@ -362,7 +360,7 @@ export async function run(): Promise<string> {
       let matchList: MatchListEntry[]
       try {
         matchList = await fetchJson<MatchListEntry[]>(
-          `${OPENDOTA}/players/${pid}/matches?hero_id=${hero.heroId}&limit=${MATCHES_TO_FETCH}`
+          `${opendotaBase()}/players/${pid}/matches?hero_id=${hero.heroId}&limit=${MATCHES_TO_FETCH}`
         )
         await sleep(RATE_MS)
       } catch (e) {

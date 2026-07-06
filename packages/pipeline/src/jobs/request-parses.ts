@@ -5,12 +5,10 @@
  * parse matches whose replays have expired (~2 weeks), so older rows
  * would be wasted requests. Capped per run to stay polite on the free tier.
  */
-import 'dotenv/config'
 import { sql } from 'drizzle-orm'
 import { db, playerMatches } from '@friendtracker/db'
-import { fetchJson, sleep } from './lib/opendota.js'
+import { fetchJson, sleep, opendotaBase } from '../lib/opendota.js'
 
-const OPENDOTA = 'https://api.opendota.com/api'
 const RATE_MS = 1100
 const MAX_REQUESTS = 10
 
@@ -27,7 +25,7 @@ export async function run(): Promise<string> {
   let requested = 0
   for (const { matchId } of rows) {
     try {
-      await fetchJson(`${OPENDOTA}/request/${matchId}`, { method: 'POST' })
+      await fetchJson(`${opendotaBase()}/request/${matchId}`, { method: 'POST' })
       requested++
       console.log(`  Requested parse for match ${matchId}`)
     } catch (e) {

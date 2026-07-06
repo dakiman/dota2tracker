@@ -267,7 +267,7 @@ The five pipeline jobs and their libs move out of `scripts/` into a package the 
 - Consumes: `@friendtracker/db` (Task 1).
 - Produces (consumed by Tasks 3–6, 9–11): package `@friendtracker/pipeline` exporting `registry: Record<string, JobFn>`, `JOB_TYPES: string[]`, `type JobFn = (payload: JobPayload | null) => Promise<string>`, `type JobPayload = { playerId?: string }`, lib re-exports (`fetchJson`, `sleep`, `opendotaBase`, `RATE_MS`, aggregators, duration stats), and `syncHeroes(): Promise<Set<number>>` / `syncPlayerMatches(playerId: string, heroIds: Set<number>): Promise<number>` via `lib/sync.js` (package-internal).
 
-- [ ] **Step 1: Create the package skeleton**
+- [x] **Step 1: Create the package skeleton**
 
 Create `packages/pipeline/package.json`:
 
@@ -318,7 +318,7 @@ Create `packages/pipeline/tsconfig.json` (identical shape to `packages/db/tsconf
 }
 ```
 
-- [ ] **Step 2: Move the libs and jobs**
+- [x] **Step 2: Move the libs and jobs**
 
 ```bash
 cd /home/dakiman/dev/dota2tracker
@@ -331,7 +331,7 @@ for f in fetch-data populate-builds fetch-hero-builds fetch-player-builds reques
 done
 ```
 
-- [ ] **Step 3: Add the env seam to the OpenDota lib**
+- [x] **Step 3: Add the env seam to the OpenDota lib**
 
 Append to `packages/pipeline/src/lib/opendota.ts`:
 
@@ -351,7 +351,7 @@ And in `vitest.config.ts`, add to `test.env`:
       OPENDOTA_RATE_MS: '0',
 ```
 
-- [ ] **Step 4: Fix up the moved job files**
+- [x] **Step 4: Fix up the moved job files**
 
 Mechanical edits to the five files now in `packages/pipeline/src/jobs/`:
 
@@ -368,7 +368,7 @@ sed -i "/^const OPENDOTA = 'https:\/\/api.opendota.com\/api'$/d" *.ts
 
 Then add `opendotaBase` to the existing `../lib/opendota.js` import in the three files that call OpenDota and survive this task unmodified — `fetch-hero-builds.ts`, `fetch-player-builds.ts`, `request-parses.ts` (e.g. `import { fetchJson, sleep, opendotaBase } from '../lib/opendota.js'`). `populate-builds.ts` never imports the OpenDota lib (pure DB aggregation) — the seds no-op on it; `fetch-data.ts` is fully replaced in Step 5. Local `const RATE_MS = 1100` lines stay as-is where present.
 
-- [ ] **Step 5: Extract sync helpers and slim fetch-data**
+- [x] **Step 5: Extract sync helpers and slim fetch-data**
 
 Create `packages/pipeline/src/lib/sync.ts` (bodies lifted verbatim from the old `fetch-data.ts`):
 
@@ -523,7 +523,7 @@ export async function run(): Promise<string> {
 }
 ```
 
-- [ ] **Step 6: Registry + package index**
+- [x] **Step 6: Registry + package index**
 
 Create `packages/pipeline/src/registry.ts`:
 
@@ -562,7 +562,7 @@ export * from './lib/duration-stats.js'
 export { fetchJson, sleep, opendotaBase, RATE_MS } from './lib/opendota.js'
 ```
 
-- [ ] **Step 7: Slim run-job.ts to a CLI over the registry**
+- [x] **Step 7: Slim run-job.ts to a CLI over the registry**
 
 Replace the `JOBS` map and job invocation in `scripts/run-job.ts` (keep the header comment, dotenv import, and the refresh_runs bracket exactly as they are):
 
@@ -618,7 +618,7 @@ main().catch((e) => {
 
 (That is the full new file content. Task 4 replaces the inline bracket with `withRunLog`.)
 
-- [ ] **Step 8: Manifests, test imports, refresh image**
+- [x] **Step 8: Manifests, test imports, refresh image**
 
 Root `package.json` — add `"@friendtracker/pipeline": "workspace:*"` to `dependencies`. Then `pnpm install`.
 
@@ -637,7 +637,7 @@ COPY packages/pipeline packages/pipeline
 
 (The `pnpm --filter "./packages/*" build` line from Task 1 already builds it.)
 
-- [ ] **Step 9: Verify the suite and the manual CLI path**
+- [x] **Step 9: Verify the suite and the manual CLI path**
 
 ```bash
 pnpm lint && pnpm test
@@ -651,7 +651,7 @@ pnpm tsx scripts/run-job.ts nonsense; echo "exit=$?"
 
 Expected: usage line listing `fetch-data|populate-builds|fetch-hero-builds|fetch-player-builds|request-parses|backup-db`, `exit=2`.
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add -A

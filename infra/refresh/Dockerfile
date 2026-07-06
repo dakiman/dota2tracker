@@ -10,6 +10,7 @@ RUN apk add --no-cache postgresql16-client
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared packages/shared
 COPY packages/db packages/db
+COPY packages/pipeline packages/pipeline
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --frozen-lockfile \

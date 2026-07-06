@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@friendtracker/db": "workspace:*",
+    "@friendtracker/pipeline": "workspace:*",
     "@friendtracker/shared": "workspace:*"
   },
   "devDependencies": {

@@ -21,3 +21,11 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> 
   }
   throw new Error(`OpenDota: gave up after 5 retries on ${url}`)
 }
+
+/** OpenDota base URL. OPENDOTA_URL overrides for tests; read at call time. */
+export function opendotaBase(): string {
+  return process.env.OPENDOTA_URL ?? 'https://api.opendota.com/api'
+}
+
+/** Delay between OpenDota calls. Overridable so tests don't sleep. */
+export const RATE_MS = Number(process.env.OPENDOTA_RATE_MS ?? 1100)
