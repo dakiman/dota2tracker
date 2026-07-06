@@ -4,6 +4,7 @@ RUN corepack enable && corepack prepare pnpm@9 --activate
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared packages/shared
 COPY packages/db packages/db
+COPY packages/pipeline packages/pipeline
 COPY apps/api apps/api
 # apps/web is not built here, but its package.json must exist for the
 # lockfile importer check to pass with --frozen-lockfile
@@ -18,6 +19,7 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
 COPY packages/db/package.json packages/db/package.json
+COPY packages/pipeline/package.json packages/pipeline/package.json
 # Single layer: activate pnpm, install prod deps, drop caches — split layers
 # would keep the corepack/pnpm caches in the image even after deletion
 RUN corepack enable && corepack prepare pnpm@9 --activate \
@@ -26,6 +28,7 @@ RUN corepack enable && corepack prepare pnpm@9 --activate \
 COPY --from=builder /app/packages/shared/dist packages/shared/dist
 COPY --from=builder /app/packages/db/dist packages/db/dist
 COPY --from=builder /app/packages/db/migrations packages/db/migrations
+COPY --from=builder /app/packages/pipeline/dist packages/pipeline/dist
 COPY --from=builder /app/apps/api/dist apps/api/dist
 ENV NODE_ENV=production
 WORKDIR /app/apps/api
