@@ -1876,7 +1876,7 @@ Crontab pipeline lines and the entrypoint's self-heal switch from direct `run-jo
 - Consumes: `enqueue`, `JOB_TYPES` (Task 3), `registry` entries incl. `refresh-profiles` (Task 5).
 - Produces: CLI `tsx scripts/enqueue-job.ts <type> [<type> ...]` used by cron and entrypoint.
 
-- [ ] **Step 1: Implement the CLI**
+- [x] **Step 1: Implement the CLI**
 
 Create `scripts/enqueue-job.ts`:
 
@@ -1910,7 +1910,7 @@ main().catch((e) => {
 })
 ```
 
-- [ ] **Step 2: Rewrite crontab and entrypoint**
+- [x] **Step 2: Rewrite crontab and entrypoint**
 
 Replace `infra/refresh/crontab` with:
 
@@ -1937,7 +1937,7 @@ cd /app
 exec crond -f -l 2
 ```
 
-- [ ] **Step 3: Verify the CLI end-to-end against the dev DB**
+- [x] **Step 3: Verify the CLI end-to-end against the dev DB**
 
 ```bash
 cd /home/dakiman/dev/dota2tracker
@@ -1953,7 +1953,7 @@ sg docker -c "docker compose -p dota2tracker exec db psql -U friendtracker -c \"
 
 Then `pnpm lint` (scripts tsconfig covers the new CLI).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add scripts/enqueue-job.ts infra/refresh/crontab infra/refresh/entrypoint.sh

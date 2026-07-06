@@ -1,7 +1,8 @@
-# Cheap match sync + aggregates + parse requests: every 6 hours.
-# ~10 OpenDota calls + up to 10 parse requests per run.
-20 */6 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts fetch-data > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts populate-builds > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts request-parses > /proc/1/fd/1 2>&1
-# Slow build fetchers: daily, off-peak. ~300-500 OpenDota calls.
-40 3 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts fetch-hero-builds > /proc/1/fd/1 2>&1 && ./node_modules/.bin/tsx scripts/run-job.ts fetch-player-builds > /proc/1/fd/1 2>&1
+# Cheap match sync + aggregates + parse requests: every 6 hours. Enqueued —
+# the API poller executes; queue order preserves the pipeline sequence.
+20 */6 * * * cd /app && ./node_modules/.bin/tsx scripts/enqueue-job.ts fetch-data populate-builds request-parses > /proc/1/fd/1 2>&1
+# Slow build fetchers + profile re-sync: daily, off-peak. ~300-500 OpenDota calls.
+40 3 * * * cd /app && ./node_modules/.bin/tsx scripts/enqueue-job.ts fetch-hero-builds fetch-player-builds refresh-profiles > /proc/1/fd/1 2>&1
 # Nightly DB backup to $BACKUP_DIR (custom-format dump, 7-day rotation).
+# Stays a DIRECT run: pg_dump + the backups volume exist only in this image.
 10 4 * * * cd /app && ./node_modules/.bin/tsx scripts/run-job.ts backup-db > /proc/1/fd/1 2>&1
