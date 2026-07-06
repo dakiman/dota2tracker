@@ -4,13 +4,14 @@
 2026-07-02; detailed implementation plan (per-phase work items, feasibility, estimates)
 in `docs/superpowers/plans/2026-07-02-roadmap-implementation-plan.md`.*
 
-**Status 2026-07-05:** Phases 1, 2, 2.5, the **Phase 3 prerequisites** (Drizzle snapshot
-repair, nightly pg_dump backups), and **Phase 3a** (Steam OpenID auth + rate limiting) are
-**implemented and merged to main** via the executable plans in `docs/superpowers/plans/`
-(ticked plan docs double as build logs). **Next up: Phase 3b** (pipeline-as-service +
-self-service players). 3b/3c remain their own spec → plan → implement cycles. Phase 1/2
-remainder is the operator prod rollout (see the note in Phase 1); the Phase 3a operator
-rollout (auth env + backup mount) is captured in `DEPLOY.md`.
+**Status 2026-07-06:** Phases 1, 2, 2.5, the **Phase 3 prerequisites** (Drizzle snapshot
+repair, nightly pg_dump backups), **Phase 3a** (Steam OpenID auth + rate limiting), and
+**Phase 3b** (pipeline-as-service + self-service players) are **implemented and merged to
+main** via the executable plans in `docs/superpowers/plans/` (ticked plan docs double as
+build logs). **Next up: Phase 3c** (leagues as saved filters). 3c remains its own spec →
+plan → implement cycle. Phase 1/2 remainder is the operator prod rollout (see the note in
+Phase 1); the Phase 3a/3b operator rollouts (auth env + backup mount, `ADMIN_STEAM_IDS` +
+image rebuild) are captured in `DEPLOY.md`.
 
 This is the single source of truth for **where the product is going**. Architecture and
 commands live in `CLAUDE.md`; the code review itself (with per-finding detail) is in
@@ -162,11 +163,15 @@ Decomposed into sub-projects, each its own spec → plan → implement cycle:
   header sign-in/out landed here. Multi-origin solved via the `ALLOWED_ORIGINS` allowlist
   (scheme per entry, tunnel-safe); the outbound OpenID redirect was spiked live against real
   Steam. **Auth deliberately protects nothing yet** — infrastructure for 3b/3c.
-- **3b — Pipeline-as-service + self-service players** — finish the pipeline-as-library
-  refactor (→ `packages/pipeline`); minimal job runner (`jobs` table + in-process
-  poller — this scale never needs Redis); `POST /api/players` validates the account
-  against OpenDota, surfaces the "Expose Public Match Data" caveat in the UI when
-  detected, and enqueues the fetch; admin "refresh now".
+- **3b — Pipeline-as-service + self-service players** — ✅ **DONE 2026-07-06** —
+  `packages/db` + `packages/pipeline` extracted; `jobs` queue (generated migration 0008,
+  pending-dedup index) + in-process API poller as the single executor (5 s tick, serial
+  drain, boot recovery, pruning); the refresh container demoted to an enqueuer
+  (`scripts/enqueue-job.ts`), `backup-db` stays a direct run; `POST /api/players`
+  (self-serve + admin add, OpenDota validation with the no-public-data / "Expose Public
+  Match Data" UX) and `POST /api/admin/refresh`; env-designated admins via
+  `ADMIN_STEAM_IDS` (`requireAuth`/`requireAdmin`); CSRF Origin-allowlist middleware;
+  `refresh-profiles` daily name/avatar re-sync; parse-request window widened 14→30 days.
 - **3c — Leagues: pure saved filter** *(decided, was open question 3)* — `leagues` +
   `league_members`; a league is a named player set resolved server-side onto the
   existing `?players=` code path (`?league=slug` accepted by meta/heroes/matches
@@ -216,8 +221,10 @@ From `fable-review.md` §3/§7:
   (only *recent* unparsed matches, capped per run), so coverage improves going forward
   but the historical backlog stays unparsed.
 - **Chipe (78589430) has no public OpenDota data** — needs "Expose Public Match Data"
-  enabled in his Dota client; until then his stats are absent. → Phase 3b's validation
-  flow surfaces this in the UI and makes his onboarding self-service once he flips it.
+  enabled in his Dota client; until then his stats are absent. → Onboarding is now
+  self-service (Phase 3b): once he enables the setting, the next 6 h cron (or an admin
+  "Refresh now") picks up his history. `POST /api/players` blocks a re-add with 409 while
+  he's tracked, but re-adding is unnecessary — the scheduled sync handles it.
 
 ---
 

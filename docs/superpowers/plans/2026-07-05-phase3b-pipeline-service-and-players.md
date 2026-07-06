@@ -2749,7 +2749,7 @@ Documentation catches up with the new layout and endpoints; both Docker images (
 **Files:**
 - Modify: `CLAUDE.md`, `DEPLOY.md`, `ROADMAP.md`, `.env.example` (only if Task 7's entry is missing)
 
-- [ ] **Step 1: Update CLAUDE.md**
+- [x] **Step 1: Update CLAUDE.md**
 
 Apply these content changes (wording may be tightened to fit surrounding text):
 
@@ -2760,7 +2760,7 @@ Apply these content changes (wording may be tightened to fit surrounding text):
 - **Auth paragraph**: replace "Auth protects nothing yet — it is infrastructure for later phases." with: mutations are live as of 3b; admins come from `ADMIN_STEAM_IDS` (comma-separated steam64s, `AuthUser.isAdmin` computed per request); CSRF = Origin-allowlist middleware on mutating methods over the SameSite=Lax cookie; strict 10/min limiter also covers `/api/players` and `/api/admin/*`.
 - **Environment**: add `ADMIN_STEAM_IDS` and `OPENDOTA_RATE_MS` (test-only override) to the variables list.
 
-- [ ] **Step 2: Update DEPLOY.md (operator notes — do NOT touch /srv/dakis)**
+- [x] **Step 2: Update DEPLOY.md (operator notes — do NOT touch /srv/dakis)**
 
 Add a "Phase 3b rollout" section:
 
@@ -2777,7 +2777,7 @@ Add a "Phase 3b rollout" section:
 4. Commit /srv/dakis.
 ```
 
-- [ ] **Step 3: Tick ROADMAP.md**
+- [x] **Step 3: Tick ROADMAP.md**
 
 In the Phase 3 section, mark 3b done in the same style as 3a:
 
@@ -2785,7 +2785,7 @@ In the Phase 3 section, mark 3b done in the same style as 3a:
 - Update the **Status** line at the top: Phase 3b implemented; next up 3c.
 - Update the "Chipe (78589430) has no public OpenDota data" known-gap bullet: onboarding is now self-service — once he enables the setting, the next 6 h cron (or admin refresh) picks up his history; re-adding is blocked with a 409 but unnecessary.
 
-- [ ] **Step 4: Build both Docker images (deferred from Tasks 1/2)**
+- [x] **Step 4: Build both Docker images (deferred from Tasks 1/2)**
 
 ```bash
 cd /home/dakiman/dev/dota2tracker
@@ -2794,7 +2794,7 @@ sg docker -c 'docker compose -p dota2tracker build api refresh'
 
 Expected: both images build cleanly. **Do not `up` the api service** — port 3000 is owned by jira-rag on this host. If a build fails, fix the Dockerfile and re-run before committing.
 
-- [ ] **Step 5: Full gate**
+- [x] **Step 5: Full gate**
 
 ```bash
 pnpm lint && pnpm test
@@ -2803,7 +2803,7 @@ git status -s
 
 Expected: lint + full suite green; only the intended doc files modified.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add CLAUDE.md DEPLOY.md ROADMAP.md .env.example
@@ -2812,7 +2812,7 @@ git commit -m "docs: phase 3b build log — pipeline packages, job queue, self-s
 Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>"
 ```
 
-- [ ] **Step 7: Manual spike (dakiman, optional, not agent-run)**
+- [x] **Step 7: Manual spike (dakiman, optional, not agent-run)**
 
 Post-rollout sanity on real infrastructure: start the dev stack (`db` + dev API on a free port + `pnpm dev:web`), sign in with Steam, click "Track my account" with a fresh account, watch the poller log run `fetch-player`, and confirm the 422 copy renders for a private account (a second Steam account with data unexposed, or temporary curiosity via the admin input and a known-private friend's ID).
 

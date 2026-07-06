@@ -40,6 +40,17 @@ Do these once when next starting the stack on the server:
   `pg_restore --clean --if-exists -d <scratch-db-url> <dump>` against a throwaway DB. Never
   restore into the live `friendtracker` DB as a test.
 
+## Phase 3b rollout (operator)
+
+1. Set `ADMIN_STEAM_IDS=<dakiman's steam64>` on the **api** service environment
+   in /srv/dakis/apps/dota2tracker/compose.yml.
+2. Rebuild both images (new packages + crontab):
+   `cd /srv/dakis && sg docker -c 'docker compose up -d --build dota2tracker-api dota2tracker-refresh'`
+3. Verify: sign in on :8743 → admin controls appear; "Refresh now" → footer
+   data-age resets within a minute (poller executes the queued trio);
+   `SELECT * FROM jobs ORDER BY id DESC LIMIT 5` shows done rows.
+4. Commit /srv/dakis.
+
 ## Data pipeline (run after first deploy or to refresh stats)
 
 **Refresh is scheduled** — the `dota2tracker-refresh` container syncs matches every
