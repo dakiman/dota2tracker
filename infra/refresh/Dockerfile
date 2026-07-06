@@ -9,12 +9,12 @@ RUN corepack enable && corepack prepare pnpm@9 --activate
 RUN apk add --no-cache postgresql16-client
 COPY pnpm-workspace.yaml package.json pnpm-lock.yaml tsconfig.base.json ./
 COPY packages/shared packages/shared
+COPY packages/db packages/db
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
 RUN pnpm install --frozen-lockfile \
   && rm -rf /root/.cache /root/.local/share/pnpm /root/.npm
-RUN pnpm --filter @friendtracker/shared build
-COPY apps/api/src/db apps/api/src/db
+RUN pnpm --filter "./packages/*" build
 COPY scripts scripts
 COPY infra/refresh/crontab /etc/crontabs/root
 COPY infra/refresh/entrypoint.sh /entrypoint.sh

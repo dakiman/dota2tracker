@@ -1,11 +1,11 @@
 import { serve } from '@hono/node-server'
 import { migrate } from 'drizzle-orm/node-postgres/migrator'
-import { db, pool } from './db/index.js'
+import { db, pool, MIGRATIONS_DIR } from '@friendtracker/db'
 import { app } from './app.js'
 
 try {
   console.log('Running DB migrations...')
-  await migrate(db, { migrationsFolder: 'src/db/migrations' })
+  await migrate(db, { migrationsFolder: MIGRATIONS_DIR })
   console.log('Migrations done.')
 } catch (err) {
   console.error('Migration failed:', err)

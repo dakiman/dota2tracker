@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { and, eq, inArray, sql, desc } from 'drizzle-orm'
-import { db, heroes, playerMatches } from '../db/index.js'
+import { db, heroes, playerMatches } from '@friendtracker/db'
 import { parsePlayersParam } from './util.js'
 import type { HeroStat, Role } from '@friendtracker/shared'
 

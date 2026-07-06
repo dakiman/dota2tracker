@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest'
 import { app } from '../apps/api/src/app.js'
-import { pool } from '../apps/api/src/db/index.js'
+import { pool } from '@friendtracker/db'
 
 // Seeded by tests/global-setup.ts:
 //   match 1001 @ 2026-01-02T10:00Z (epoch 1767348000): 111 won (antimage), 222 won (axe) — same team

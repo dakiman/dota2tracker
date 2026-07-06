@@ -5,7 +5,7 @@
  */
 import 'dotenv/config'
 import { eq } from 'drizzle-orm'
-import { db, pool, refreshRuns } from '../apps/api/src/db/index.js'
+import { db, pool, refreshRuns } from '@friendtracker/db'
 
 type JobModule = { run: () => Promise<string> }
 

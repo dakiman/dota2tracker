@@ -8,8 +8,8 @@
     "dev:api": "pnpm --filter api dev",
     "dev:web": "pnpm --filter web dev",
     "build": "pnpm -r build",
-    "lint": "pnpm --filter @friendtracker/shared build && pnpm -r lint && tsc -p scripts",
-    "test": "pnpm --filter @friendtracker/shared build && vitest run",
+    "lint": "pnpm --filter \"./packages/*\" build && pnpm -r lint && tsc -p scripts",
+    "test": "pnpm --filter \"./packages/*\" build && vitest run",
     "seed": "pnpm tsx scripts/seed.ts",
     "fetch-data": "pnpm tsx scripts/run-job.ts fetch-data",
     "populate-builds": "pnpm tsx scripts/run-job.ts populate-builds",
@@ -24,6 +24,7 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "@friendtracker/db": "workspace:*",
     "@friendtracker/shared": "workspace:*"
   },
   "devDependencies": {

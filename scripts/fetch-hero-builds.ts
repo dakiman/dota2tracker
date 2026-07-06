@@ -4,7 +4,7 @@
  * Run: pnpm fetch-hero-builds (from repo root). Requires DATABASE_URL.
  */
 import 'dotenv/config'
-import { db, heroBuilds, and, eq, isNull } from '../apps/api/src/db/index.js'
+import { db, heroBuilds, and, eq, isNull } from '@friendtracker/db'
 import { sql } from 'drizzle-orm'
 import type { BuildData, StatsData, ItemGroup, SituationalItem } from '@friendtracker/shared'
 import { fetchJson, sleep } from './lib/opendota.js'

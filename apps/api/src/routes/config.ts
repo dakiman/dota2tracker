@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import { and, desc, eq } from 'drizzle-orm'
-import { db, players, refreshRuns } from '../db/index.js'
+import { db, players, refreshRuns } from '@friendtracker/db'
 import type { AppConfig } from '@friendtracker/shared'
 
 const config = new Hono()

@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { and, desc, eq, inArray, lt, sql } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
-import { db, playerMatches } from '../db/index.js'
+import { db, playerMatches } from '@friendtracker/db'
 import { parsePlayersParam } from './util.js'
 import type { TogetherResponse } from '@friendtracker/shared'
 

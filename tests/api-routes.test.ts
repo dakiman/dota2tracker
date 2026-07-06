@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll } from 'vitest'
 import { app } from '../apps/api/src/app.js'
-import { pool } from '../apps/api/src/db/index.js'
+import { pool } from '@friendtracker/db'
 
 // The app-level pool (created on import with the test DATABASE_URL from
 // vitest.config env) must be closed or vitest hangs on exit.

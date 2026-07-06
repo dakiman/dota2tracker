@@ -1,9 +1,9 @@
 import { describe, it, expect, afterAll, beforeAll } from 'vitest'
 import { createServer, type Server } from 'node:http'
 import { app } from '../apps/api/src/app.js'
-import { db, pool, users } from '../apps/api/src/db/index.js'
+import { db, pool, users } from '@friendtracker/db'
 import { createSession, hashToken, sessionUser } from '../apps/api/src/auth/session.js'
-import { sessions } from '../apps/api/src/db/index.js'
+import { sessions } from '@friendtracker/db'
 import { eq } from 'drizzle-orm'
 
 let mock: Server

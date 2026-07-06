@@ -47,7 +47,7 @@ Everything under `apps/api/src/db/` moves verbatim into a new workspace package 
 **Interfaces:**
 - Produces (consumed by every later task): package `@friendtracker/db` exporting `db`, `pool`, all schema tables (`players`, `playerMatches`, `heroes`, `heroBuilds`, `refreshRuns`, `users`, `sessions`), `and`/`eq`/`isNull` re-exports, and `MIGRATIONS_DIR: string`. Drizzle commands become `pnpm --filter @friendtracker/db db:generate|db:migrate|db:studio`.
 
-- [ ] **Step 1: Create the package skeleton**
+- [x] **Step 1: Create the package skeleton**
 
 Create `packages/db/package.json`:
 
@@ -118,7 +118,7 @@ export default defineConfig({
 })
 ```
 
-- [ ] **Step 2: Move the schema, client, and migrations**
+- [x] **Step 2: Move the schema, client, and migrations**
 
 ```bash
 cd /home/dakiman/dev/dota2tracker
@@ -139,7 +139,7 @@ export const MIGRATIONS_DIR = fileURLToPath(new URL('../migrations', import.meta
 
 (No other changes — `schema.ts` and the rest of `index.ts` move verbatim; the internal `./schema.js` import still resolves.)
 
-- [ ] **Step 3: Rewrite every import of the old path**
+- [x] **Step 3: Rewrite every import of the old path**
 
 ```bash
 cd /home/dakiman/dev/dota2tracker
@@ -155,7 +155,7 @@ grep -rn "apps/api/src/db\|'\.\./db/index" apps/api/src scripts tests && echo LE
 
 Expected: `CLEAN`.
 
-- [ ] **Step 4: Rewire bootstrap, manifests, and test setup**
+- [x] **Step 4: Rewire bootstrap, manifests, and test setup**
 
 `apps/api/src/index.ts` — change the import and the migrate call:
 
@@ -190,7 +190,7 @@ Root `package.json` — add `"@friendtracker/db": "workspace:*"` to `dependencie
 
 Then: `pnpm install` (updates the lockfile with the new workspace package).
 
-- [ ] **Step 5: Update both Dockerfiles (build-verified in Task 13)**
+- [x] **Step 5: Update both Dockerfiles (build-verified in Task 13)**
 
 `apps/api/Dockerfile` builder stage — after `COPY packages/shared packages/shared` add:
 
@@ -233,7 +233,7 @@ RUN pnpm --filter "./packages/*" build
 
 and **delete** the line `COPY apps/api/src/db apps/api/src/db`.
 
-- [ ] **Step 6: Acid tests — suite green, generation still clean**
+- [x] **Step 6: Acid tests — suite green, generation still clean**
 
 ```bash
 pnpm lint && pnpm test
@@ -242,7 +242,7 @@ pnpm --filter @friendtracker/db db:generate
 
 Expected: lint clean, all existing tests PASS, and `db:generate` reports `No schema changes, nothing to migrate 😴` with `git status -s` showing no new migration files (the `meta/` snapshots moved with the folder, so the diff base is intact). **If it generates a migration, STOP and report** — the move broke snapshot bookkeeping.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A

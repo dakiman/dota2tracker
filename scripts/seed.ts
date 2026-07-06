@@ -4,7 +4,7 @@
  * Run: pnpm seed (from repo root). Requires DATABASE_URL.
  */
 import 'dotenv/config'
-import { db, players, heroBuilds, and, eq, isNull } from '../apps/api/src/db/index.js'
+import { db, players, heroBuilds, and, eq, isNull } from '@friendtracker/db'
 import type { BuildData, StatsData } from '@friendtracker/shared'
 
 const SAMPLE_PLAYERS = [

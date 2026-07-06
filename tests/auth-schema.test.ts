@@ -1,6 +1,6 @@
 import { describe, it, expect, afterAll } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { db, pool, users, sessions } from '../apps/api/src/db/index.js'
+import { db, pool, users, sessions } from '@friendtracker/db'
 
 afterAll(async () => {
   await pool.end()

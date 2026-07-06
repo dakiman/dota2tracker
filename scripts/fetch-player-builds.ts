@@ -7,7 +7,7 @@
  * Run: pnpm fetch-player-builds (from repo root). Requires DATABASE_URL + players in DB.
  */
 import 'dotenv/config'
-import { db, playerMatches, heroes, heroBuilds, players, and, eq } from '../apps/api/src/db/index.js'
+import { db, playerMatches, heroes, heroBuilds, players, and, eq } from '@friendtracker/db'
 import { sql } from 'drizzle-orm'
 import type {
   Role,

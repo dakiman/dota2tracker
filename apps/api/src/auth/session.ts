@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { and, eq, gt } from 'drizzle-orm'
-import { db, sessions, users } from '../db/index.js'
+import { db, sessions, users } from '@friendtracker/db'
 import type { AuthUser } from '@friendtracker/shared'
 
 export const SESSION_COOKIE = 'session'

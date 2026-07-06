@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@friendtracker/db':
+        specifier: workspace:*
+        version: link:packages/db
       '@friendtracker/shared':
         specifier: workspace:*
         version: link:packages/shared
@@ -45,6 +48,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@friendtracker/db':
+        specifier: workspace:*
+        version: link:../../packages/db
       '@friendtracker/shared':
         specifier: workspace:*
         version: link:../../packages/shared
@@ -64,9 +70,6 @@ importers:
       '@types/pg':
         specifier: ^8.11.10
         version: 8.18.0
-      drizzle-kit:
-        specifier: ^0.28.0
-        version: 0.28.1
       tsx:
         specifier: ^4.19.0
         version: 4.21.0
@@ -107,6 +110,28 @@ importers:
       vue-tsc:
         specifier: ^2.1.10
         version: 2.2.12(typescript@5.9.3)
+
+  packages/db:
+    dependencies:
+      '@friendtracker/shared':
+        specifier: workspace:*
+        version: link:../shared
+      drizzle-orm:
+        specifier: ^0.36.0
+        version: 0.36.4(@types/pg@8.18.0)(pg@8.20.0)
+      pg:
+        specifier: ^8.20.0
+        version: 8.20.0
+    devDependencies:
+      '@types/pg':
+        specifier: ^8.11.10
+        version: 8.18.0
+      drizzle-kit:
+        specifier: ^0.28.0
+        version: 0.28.1
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
 
   packages/shared:
     devDependencies:

@@ -2,7 +2,7 @@ import { describe, it, expect, afterAll } from 'vitest'
 import { Hono } from 'hono'
 import { rateLimit } from '../apps/api/src/middleware/rate-limit.js'
 import { app } from '../apps/api/src/app.js'
-import { pool } from '../apps/api/src/db/index.js'
+import { pool } from '@friendtracker/db'
 
 afterAll(async () => {
   await pool.end()

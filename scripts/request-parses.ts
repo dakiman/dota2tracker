@@ -7,7 +7,7 @@
  */
 import 'dotenv/config'
 import { sql } from 'drizzle-orm'
-import { db, playerMatches } from '../apps/api/src/db/index.js'
+import { db, playerMatches } from '@friendtracker/db'
 import { fetchJson, sleep } from './lib/opendota.js'
 
 const OPENDOTA = 'https://api.opendota.com/api'

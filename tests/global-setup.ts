@@ -18,7 +18,7 @@ export default async function setup() {
 
   const pool = new pg.Pool({ connectionString: `${BASE}/friendtracker_test` })
   const db = drizzle(pool)
-  await migrate(db, { migrationsFolder: 'apps/api/src/db/migrations' })
+  await migrate(db, { migrationsFolder: 'packages/db/migrations' })
 
   await pool.query(`INSERT INTO players (id, name) VALUES ('111', 'Alice'), ('222', 'Bob')`)
   await pool.query(

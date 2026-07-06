@@ -6,7 +6,7 @@
  */
 import 'dotenv/config'
 import { sql } from 'drizzle-orm'
-import { db, heroes, playerMatches, players } from '../apps/api/src/db/index.js'
+import { db, heroes, playerMatches, players } from '@friendtracker/db'
 import { heroNameToSlug, deriveRole } from '@friendtracker/shared'
 import { fetchJson, sleep } from './lib/opendota.js'
 
