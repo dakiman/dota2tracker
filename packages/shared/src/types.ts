@@ -212,4 +212,6 @@ export interface AuthUser {
   playerId: string | null
   name: string
   avatar: string | null
+  /** True when the user's steamId is in the ADMIN_STEAM_IDS env allowlist. */
+  isAdmin: boolean
 }

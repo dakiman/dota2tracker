@@ -1548,7 +1548,7 @@ Adminship is computed at request time from `ADMIN_STEAM_IDS` (comma-separated st
 - Consumes: `sessionUser` (3a), `sessionMiddleware`/`AuthEnv` (3a).
 - Produces (consumed by Tasks 10–12): `AuthUser.isAdmin: boolean`; `adminSteamIds(): string[]` from `auth/admin.js`; `requireAuth` (anonymous → 401) and `requireAdmin` (anonymous → 401, non-admin → 403) from `middleware/authz.js`. Env: `ADMIN_STEAM_IDS` (default empty — nobody is admin).
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/authz.test.ts`:
 
@@ -1635,12 +1635,12 @@ describe('isAdmin on /api/auth/me', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/authz.test.ts`
 Expected: FAIL — cannot find module `../apps/api/src/middleware/authz.js`.
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 Append to `packages/shared/src/types.ts`, inside the `AuthUser` interface (after `avatar`):
 
@@ -1703,7 +1703,7 @@ export const requireAdmin = createMiddleware<AuthEnv>(async (c, next) => {
 ADMIN_STEAM_IDS=
 ```
 
-- [ ] **Step 4: Fix the two changed assertions in tests/auth-routes.test.ts**
+- [x] **Step 4: Fix the two changed assertions in tests/auth-routes.test.ts**
 
 The `toEqual` on `/api/auth/me`'s user (Task 5 of the 3a plan, "returns the user for a valid session cookie") gains `isAdmin: false`:
 
@@ -1720,12 +1720,12 @@ The `toEqual` on `/api/auth/me`'s user (Task 5 of the 3a plan, "returns the user
 
 Search the file for any other exact-shape assertion on a user object (`rg -n "toEqual\(\{" tests/auth-routes.test.ts`) and add `isAdmin: false` wherever the full AuthUser shape is asserted.
 
-- [ ] **Step 5: Run the tests to verify they pass**
+- [x] **Step 5: Run the tests to verify they pass**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/authz.test.ts tests/auth-routes.test.ts`
 Expected: PASS. Then `pnpm test && pnpm lint` — all green.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/shared/src/types.ts apps/api/src/auth/admin.ts apps/api/src/auth/session.ts apps/api/src/middleware/authz.ts tests/authz.test.ts tests/auth-routes.test.ts .env.example

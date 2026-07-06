@@ -67,6 +67,7 @@ describe('session middleware + /api/auth/me', () => {
       playerId: null,
       name: 'Session Tester',
       avatar: null,
+      isAdmin: false,
     })
   })
 

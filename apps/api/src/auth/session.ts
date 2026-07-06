@@ -2,6 +2,7 @@ import { createHash, randomBytes } from 'node:crypto'
 import { and, eq, gt } from 'drizzle-orm'
 import { db, sessions, users } from '@friendtracker/db'
 import type { AuthUser } from '@friendtracker/shared'
+import { adminSteamIds } from './admin.js'
 
 export const SESSION_COOKIE = 'session'
 export const SESSION_TTL_MS = 30 * 24 * 3600 * 1000
@@ -49,6 +50,7 @@ export async function sessionUser(token: string): Promise<AuthUser | null> {
     playerId: row.playerId,
     name: row.name,
     avatar: row.avatar,
+    isAdmin: adminSteamIds().includes(row.steamId),
   }
 }
 
