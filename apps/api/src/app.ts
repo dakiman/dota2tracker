@@ -6,6 +6,7 @@ import matches from './routes/matches.js'
 import together from './routes/together.js'
 import auth from './routes/auth.js'
 import playersRoute from './routes/players.js'
+import admin from './routes/admin.js'
 import { sessionMiddleware, type AuthEnv } from './middleware/session.js'
 import { rateLimit } from './middleware/rate-limit.js'
 import { csrfMiddleware } from './middleware/csrf.js'
@@ -14,12 +15,14 @@ export const app = new Hono<AuthEnv>()
 
 app.use('/api/auth/*', rateLimit({ windowMs: 60_000, max: 10 }))
 app.use('/api/players', rateLimit({ windowMs: 60_000, max: 10 }))
+app.use('/api/admin/*', rateLimit({ windowMs: 60_000, max: 10 }))
 app.use('/api/*', rateLimit({ windowMs: 60_000, max: 300 }))
 app.use('/api/*', csrfMiddleware)
 app.use('/api/*', sessionMiddleware)
 
 app.route('/api/auth', auth)
 app.route('/api/players', playersRoute)
+app.route('/api/admin', admin)
 app.route('/api/config', config)
 app.route('/api/meta', meta)
 app.route('/api/heroes', heroes)

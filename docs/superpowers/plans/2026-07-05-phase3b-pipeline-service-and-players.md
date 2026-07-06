@@ -2300,7 +2300,7 @@ Admin-only trigger that enqueues the standard 6-hour trio; pending-dedup makes i
 - Consumes: `requireAdmin` (Task 7), `enqueue` (Task 3).
 - Produces (consumed by Task 12): `POST /api/admin/refresh` → 202 `{ queued: true }` | 200 `{ queued: false }` | 401 | 403.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 Create `tests/admin-refresh.test.ts`:
 
@@ -2379,12 +2379,12 @@ describe('POST /api/admin/refresh', () => {
 })
 ```
 
-- [ ] **Step 2: Run it to verify it fails**
+- [x] **Step 2: Run it to verify it fails**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/admin-refresh.test.ts`
 Expected: FAIL — 404s (route doesn't exist).
 
-- [ ] **Step 3: Implement and wire**
+- [x] **Step 3: Implement and wire**
 
 Create `apps/api/src/routes/admin.ts`:
 
@@ -2425,12 +2425,12 @@ app.use('/api/admin/*', rateLimit({ windowMs: 60_000, max: 10 }))
 app.route('/api/admin', admin)
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm --filter "./packages/*" build && pnpm exec vitest run tests/admin-refresh.test.ts`
 Expected: PASS (4 tests). Then `pnpm test && pnpm lint` — all green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/api/src/routes/admin.ts apps/api/src/app.ts tests/admin-refresh.test.ts
